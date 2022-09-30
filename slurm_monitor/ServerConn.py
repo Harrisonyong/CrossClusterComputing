@@ -10,7 +10,7 @@
 import paramiko
 
 
-class Connect:
+class Connector:
     def __init__(self, host=None, port=None,
                  user=None, password=None):
         self.host = host
@@ -22,7 +22,7 @@ class Connect:
         self.ssh_client.connect(host, port, user, password)
 
 
-class SlurmServer(Connect):
+class SlurmServer(Connector):
     """
         连接slurm集群，执行集群查询
     """
