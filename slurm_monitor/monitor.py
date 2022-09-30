@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from urllib import response
 from fastapi import APIRouter
-from ServerConn import SlurmServer
+from serverconn import SlurmServer
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.config import Configuration as config
 
