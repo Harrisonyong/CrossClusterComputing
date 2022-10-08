@@ -17,9 +17,9 @@ class Connector:
         self.port = port
         self.user = user
         self.password = password
-        self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-        self.ssh_client.connect(host, port, user, password)
+        self.sshClient = paramiko.SSHClient()
+        self.sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+        self.sshClient.connect(host, port, user, password)
 
 
 class SlurmServer(Connector):
@@ -32,8 +32,8 @@ class SlurmServer(Connector):
 
     def exec(self, command):
         std_in, std_out, std_err \
-            = self.ssh_client.exec_command(command)
+            = self.sshClient.exec_command(command)
         for line in std_out:
             print(line.strip("\n"))
         print(std_err.read().decode("utf8"))
-        self.ssh_client.close()
+        self.sshClient.close()
