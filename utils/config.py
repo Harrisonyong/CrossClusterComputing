@@ -9,7 +9,6 @@
 '''
 import configparser
 from pathlib import Path
-from typing_extensions import Self
 
 CONFIG = configparser.ConfigParser()
 
@@ -23,10 +22,10 @@ class Configuration:
     SECS = CONFIG.sections()
 
     def ServiceConfig():
-        for key in Configuration.SECS:
-            if key.startswith("slurm"):
-                assert "host" in CONFIG[key], f"{key} must have a hostname"
-                assert "port" in CONFIG[key], f"{key} must have a port"
-                assert "user" in CONFIG[key], f"{key} must have a user"
-                assert "password" in CONFIG[key], f"{key} must have a password"
-                yield CONFIG[key]
+        for name in Configuration.SECS:
+            if name.startswith("slurm"):
+                assert "host" in CONFIG[name], f"{name} must have a hostname"
+                assert "port" in CONFIG[name], f"{name} must have a port"
+                assert "user" in CONFIG[name], f"{name} must have a user"
+                assert "password" in CONFIG[name], f"{name} must have a password"
+                yield (name, CONFIG[name])
