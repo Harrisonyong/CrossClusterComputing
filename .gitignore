@@ -1,2 +1,4 @@
 __pycache__
 .vscode
+utils/__pycache__
+slurm_monitor/__pycache__
