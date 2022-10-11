@@ -9,6 +9,7 @@
 '''
 
 from slurm_monitor import monitor
+from db import dbcontroller
 import uvicorn
 from fastapi import FastAPI
 import sys
@@ -29,6 +30,7 @@ app = FastAPI(
 )
 
 app.include_router(monitor.router)
+app.include_router(dbcontroller.router)
 
 
 @app.get("/")
