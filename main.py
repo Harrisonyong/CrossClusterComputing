@@ -23,7 +23,7 @@ description = """
 """
 
 app = FastAPI(
-    title="MultiServiceManage",
+    title="CrossClusterComputing",
     description=description,
     version="0.0.1",
 )
