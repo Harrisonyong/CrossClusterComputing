@@ -3,3 +3,4 @@ __pycache__
 utils/__pycache__
 slurm_monitor/__pycache__
 data
+*/__pycache__
