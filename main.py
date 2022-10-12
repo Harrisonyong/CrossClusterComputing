@@ -32,6 +32,7 @@ app = FastAPI(
 app.include_router(monitor.router)
 app.include_router(dbcontroller.router)
 
+# monitor.register_scheduler(app=app)
 
 @app.get("/")
 async def root():

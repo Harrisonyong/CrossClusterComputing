@@ -17,4 +17,8 @@ pip install -r requirements.txt
 python main.py
 ```
 
+# 启动接口
+```bash
+http://127.0.0.1:8001/docs#/
+```
 
