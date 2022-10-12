@@ -13,11 +13,12 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 
+
 __all__ = ["Scheduler"]
 
 
 class Scheduler:
-    sqlite = "sqlite:///"+ str(Path(__file__).parent.parent/"data/jobs.db")
+    sqlite = "sqlite:///" + str(Path(__file__).parent.parent/"data/jobs.db")
     __interval_task = {
         # 配置存储器
         "jobstores": {
@@ -36,10 +37,24 @@ class Scheduler:
 
     }
 
+    @staticmethod
+    def job_listener(Event, logger, scheduler):
+        job = scheduler.get_job(Event.job_id)
+        if not Event.exception:
+            print('任务正常运行！')
+            logger.info(
+                f"jobname={job.name};jobid={Event.job_id}|jobtrigger={job.trigger}|jobtime={Event.scheduled_run_time}|retval={Event.retval}")
+
+        else:
+            print("任务出错了！！！！！")
+            logger.error(
+                "jobname={job.name}|jobtrigger={job.trigger}|errcode={Event.code}|exception=[{Event.exception}]|traceback=[{Event.traceback}]|scheduled_time={Event.scheduled_run_time}")
+
     @classmethod
     def AsyncScheduler(cls):
         return AsyncIOScheduler(**cls.__interval_task)
 
     @classmethod
     def BackgroundScheduler(cls):
-        return BackgroundScheduler(**cls.__interval_task)
+        scheduler = BackgroundScheduler(**cls.__interval_task)
+        return scheduler
