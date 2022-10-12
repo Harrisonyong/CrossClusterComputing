@@ -1,6 +1,6 @@
-__pycache__
-.vscode
-utils/__pycache__
-slurm_monitor/__pycache__
-data
+__pycache__/
+.vscode/
+utils/__pycache__/
+slurm_monitor/__pycache__/
+data/
 */__pycache__
