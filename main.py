@@ -10,6 +10,7 @@
 
 from slurm_monitor import monitor
 from db import dbcontroller
+from job import job_controller
 import uvicorn
 from fastapi import FastAPI
 import sys
@@ -31,6 +32,7 @@ app = FastAPI(
 
 app.include_router(monitor.router)
 app.include_router(dbcontroller.router)
+app.include_router(job_controller.router)
 
 # monitor.register_scheduler(app=app)
 
