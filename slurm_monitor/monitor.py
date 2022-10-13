@@ -50,7 +50,7 @@ async def add_job():
                            EVENT_JOB_MISSED | EVENT_JOB_EXECUTED)
     scheduler._logger = logger
     for name, conf in config.ServiceConfig():
-        host, port, user, password = conf["host"], conf["port"], conf["user"], conf["password"]
+        host, port, user, password = conf.host, conf.port, conf.user, conf.password
         scheduler.add_job(slurm_search, args=[
                           host, port, user, password], id=f"{name}", trigger="interval", seconds=5, replace_existing=True)
         print(f"定时监控任务{name}启动")

@@ -9,29 +9,56 @@
 '''
 import configparser
 from pathlib import Path
+from textwrap import indent
 
 CONFIG = configparser.ConfigParser()
 
 __all__= ["Configuration"]
 
+class _Config:
+    def __init__(self, config:CONFIG, sec:str) -> None:
+        self.sec = sec
+        self.secs = {}
+        for o in config.options(sec):
+            self.secs[o] = config.get(sec, o)
+    
+    def __getattr__(self, opt):
+        try:
+            return self.secs[opt]
+        except:
+            return f"{self.sec} has not attr of {opt}"
+
+
+class ConfigReader:
+    def __init__(self, configFile) -> None:
+        self.parser = configparser.ConfigParser()
+        self.config_file = Path(__file__).parent.parent.joinpath(configFile)
+        self.parser.read(self.config_file)
+        self.sections = self.parser.sections()
+        self.index = 0
+
+    def config(self, sec):
+        assert sec in self.parser.sections(); f"{sec} not in {self.config_file}"
+        return _Config(self.parser, sec)
+
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index > len(self.sections) - 1:
+            raise StopIteration
+        sec = self.sections[self.index]
+        self.index += 1
+        return sec, _Config(self.parser, sec)
+
 
 class Configuration:
     
     def ServiceConfig():
-        SCONFIG = "service.config"
-        service_config_file = Path(__file__).parent.joinpath(SCONFIG)
-        CONFIG.read(service_config_file)
-        for name in CONFIG.sections():
-            if name.startswith("slurm"):
-                assert "host" in CONFIG[name], f"{name} must have a hostname"
-                assert "port" in CONFIG[name], f"{name} must have a port"
-                assert "user" in CONFIG[name], f"{name} must have a user"
-                assert "password" in CONFIG[name], f"{name} must have a password"
-                yield (name, CONFIG[name])
+        slurms = ConfigReader("config/service.config")
+        return slurms
 
     def dbConfig():
-        dbConfigFile=Path(__file__).parent.parent.joinpath("config/db.ini")
-        CONFIG.read(dbConfigFile)
-        host = CONFIG.get("db", "host")
-        file = CONFIG.get("db", "file")
-        return {"host": host, "file": file}
+        db = ConfigReader("config/db.ini").config("db")
+        return {"host": db.host, "file": db.file}
