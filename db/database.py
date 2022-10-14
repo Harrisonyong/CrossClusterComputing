@@ -16,6 +16,6 @@ Base = declarative_base()
 #数据库连接
 class Database:
     def __init__(self, db):
-        self.engine=create_engine("sqlite:///"+db, echo=True, check_same_thread=False)
+        self.engine=create_engine(f"sqlite:///{db}?check_same_thread=False", echo=True)
         self.session = sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
 
