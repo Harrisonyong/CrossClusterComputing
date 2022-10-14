@@ -3,7 +3,7 @@
 # author: songquanheng
 # email: wannachan@outlook.com
 # date: 2022/10/13 周四 16:38:12
-# description: 该文件用于与用户进行HTTP交互，以进行作业投递和查看
+# description: 该文件用于与用户进行HTTP交互，以进行作业数据投递和查看
 
 import sys
 
@@ -32,5 +32,11 @@ async def welcome():
 
 @router.post("/job-submit/create")
 async def create_submit(submit: Submit):
+
     submitService.save_submit(submit)
     return Response.success(data=submit)
+
+@router.get("/job-sumit/all")
+async def all_submit_records():
+    '用于查询所有的用户投递记录'
+    return Response.success(submitService.all())
