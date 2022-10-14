@@ -7,16 +7,24 @@
 @Author :yangqinglin
 @email :yangqinglin@zhejianglab.com
 '''
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 from utils.log import Log
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from functools import partial
 from utils.scheduler import Scheduler
 from utils.config import Configuration as config
-import sys
-from pathlib import Path
 from fastapi import APIRouter
-from .serverconn import SlurmServer
-sys.path.append(str(Path(__file__).parent.parent))
+from slurm_monitor.serverconn import SlurmServer
+from sqlalchemy.orm import Session
+from db import dp_cluster_status_table as models
+from db import crud, schema, database
+
+
+dbase = database.Database(Path(__file__).parent.parent/"data"/"cluster.db")
+sessionlocal = dbase.session
+engine = dbase.engine
 
 
 router = APIRouter(
@@ -73,3 +81,8 @@ async def run():
 @router.get("/stopall")
 async def stop():
     scheduler.remove_all_jobs(jobstore=None)
+
+
+
+
+
