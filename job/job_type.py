@@ -20,3 +20,12 @@ class Submit(BaseModel):
     execute_file_path: str
     job_name: str
     resource_per_item: SingleItemAllocation
+
+def test():
+    allocation = SingleItemAllocation(node=1, memory=3, unit="G")
+    print(allocation.dict())
+    print(allocation.json())
+    print(allocation.schema_json())
+
+if __name__ == '__main__':
+    test()

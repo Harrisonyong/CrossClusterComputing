@@ -24,9 +24,7 @@ class SubmitService:
     
     def save_submit(self, submit:Submit):
         '保存用户的作业投递数据'
-        print ("作业名称：", submit.job_name)
-        jobDataSubmit=self.fromSubmit(submit)
-        print(jobDataSubmit)
+        jobDataSubmit=self.fromUserSubmit(submit)
         engine=create_engine("sqlite:///"+dbConfig["file"])
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -36,26 +34,21 @@ class SubmitService:
         
         print("记录存储成功")
 
-    def fromSubmit(self, submit: Submit):
+    def fromUserSubmit(self, submit: Submit):
         '从用户传入的作业投递数据构造投递实体与数据库映射'
-        print("开始转换")
-        print("用户数据", submit.job_name)
         dataSubmit = JobDataSubmit(
             job_name = submit.job_name,
             job_total_id = int(round(time.time() * 1000)),
             data_dir = submit.data_dir,
             user_name = submit.user,
             execute_file_path = submit.execute_file_path,
-            single_item_allocation = "{'node': 1}",
+            single_item_allocation = submit.resource_per_item.json(),
             transfer_flag = 'false',
             transfer_state = 'unhandle',
             create_time = '2022-10-14 11:11:41',
             transfer_begin_time='',
             transfer_end_time='',
         )
-        
-        print("转换结果：", dataSubmit.transfer_flag)
-        print("作业批号", dataSubmit.job_total_id)
         return dataSubmit
 
        
