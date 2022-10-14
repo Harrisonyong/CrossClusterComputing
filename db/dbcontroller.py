@@ -7,20 +7,17 @@
 @email :wannachan@outlook.com
 '''
 import sys
-from datetime import datetime
 from pathlib import Path
-from urllib import response
 from fastapi import APIRouter
+from db.db_service import DBService
 
 from utils.response import Response
 
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.config import Configuration as config
 
-from sqlalchemy import create_engine, and_, or_
-from sqlalchemy.orm import sessionmaker
 from .dp_cluster_status_table import ClusterStatus
-
+dbService = DBService()
 
 router = APIRouter(
     prefix="/db-controller",
@@ -35,24 +32,16 @@ async def welcome():
 
 @router.get("/db-config")
 async def dbConfig():
-    return config.dbConfig()
+    return dbService.dbConfig()
 
 @router.get("/all-clusters")
-async def allClusters():
-    dbConfig = config.dbConfig()
-    engine=create_engine(dbConfig["file"])
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    clusters = session.query(ClusterStatus).all()
-
+async def allClusters():    
+    clusters = dbService.query_all(ClusterStatus)
     return Response.success(msg="查询集群所有数据成功", data=clusters)
 
 @router.get("/add-cluster")
 async def addCluster():
-    dbConfig = config.dbConfig()
-    engine=create_engine(dbConfig["file"])
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    
     cluster=ClusterStatus(
         name = "slurm1",
         state = "online",
@@ -60,6 +49,5 @@ async def addCluster():
         user_name = "root",
         password = "root"
         )
-    session.add(cluster)
-    session.commit()
+    dbService.addItem(cluster)
     return Response.success(msg="数据插入成功", data=cluster)

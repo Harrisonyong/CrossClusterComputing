@@ -7,17 +7,12 @@
 
 
 import time
-import json
-
-from db.dbcontroller import dbConfig
-from sqlalchemy import and_, create_engine, or_
-from sqlalchemy.orm import sessionmaker
+from db.db_service import DBService
 from db.dp_job_data_submit_table import JobDataSubmit
-from utils.config import Configuration
 
 from job.job_type import Submit
 
-dbConfig = Configuration.dbConfig()
+dbService = DBService()
 
 class SubmitService:
     '作业数据投递服务，接收页面调用，把合法的请求转化为记录进行存储'
@@ -25,14 +20,12 @@ class SubmitService:
     def save_submit(self, submit:Submit):
         '保存用户的作业投递数据'
         jobDataSubmit=self.fromUserSubmit(submit)
-        engine=create_engine(dbConfig["file"])
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        session.add(jobDataSubmit)
-        session.commit()
-
-        
+        dbService.addItem(jobDataSubmit)
         print("记录存储成功")
+
+    def all(self):
+        return dbService.query_all(JobDataSubmit)
+
 
     def fromUserSubmit(self, submit: Submit):
         '从用户传入的作业投递数据构造投递实体与数据库映射'
