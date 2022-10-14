@@ -11,12 +11,10 @@ import configparser
 from pathlib import Path
 from textwrap import indent
 
-CONFIG = configparser.ConfigParser()
-
 __all__= ["Configuration"]
 
 class _Config:
-    def __init__(self, config:CONFIG, sec:str) -> None:
+    def __init__(self, config, sec:str) -> None:
         self.sec = sec
         self.secs = {}
         for o in config.options(sec):
