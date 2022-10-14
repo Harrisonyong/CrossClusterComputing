@@ -12,12 +12,13 @@ from pathlib import Path
 from urllib import response
 from fastapi import APIRouter
 
+from utils.response import Response
+
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.config import Configuration as config
 
 from sqlalchemy import create_engine, and_, or_
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import inspect
 from .dp_cluster_status_table import ClusterStatus
 
 
@@ -34,32 +35,22 @@ async def welcome():
 
 @router.get("/db-config")
 async def dbConfig():
-    dbConfig = config.dbConfig()
-    host = dbConfig["host"]
-    print("host="+ host)
-    file= dbConfig["file"]
-    print("file="+ file)
-    
-    return dbConfig
+    return config.dbConfig()
 
 @router.get("/all-clusters")
 async def allClusters():
     dbConfig = config.dbConfig()
-    file= dbConfig["file"]
-    print("file="+ file)
-    engine=create_engine("sqlite:///"+file)
+    engine=create_engine(dbConfig["file"])
     Session = sessionmaker(bind=engine)
     session = Session()
     clusters = session.query(ClusterStatus).all()
 
-    return clusters
+    return Response.success(msg="查询集群所有数据成功", data=clusters)
 
 @router.get("/add-cluster")
 async def addCluster():
     dbConfig = config.dbConfig()
-    file= dbConfig["file"]
-    print("file="+ file)
-    engine=create_engine("sqlite:///"+file)
+    engine=create_engine(dbConfig["file"])
     Session = sessionmaker(bind=engine)
     session = Session()
     cluster=ClusterStatus(
@@ -71,4 +62,4 @@ async def addCluster():
         )
     session.add(cluster)
     session.commit()
-    return "插入数据成功: "
+    return Response.success(msg="数据插入成功", data=cluster)

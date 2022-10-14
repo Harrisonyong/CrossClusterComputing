@@ -25,7 +25,7 @@ class SubmitService:
     def save_submit(self, submit:Submit):
         '保存用户的作业投递数据'
         jobDataSubmit=self.fromUserSubmit(submit)
-        engine=create_engine("sqlite:///"+dbConfig["file"])
+        engine=create_engine(dbConfig["file"])
         Session = sessionmaker(bind=engine)
         session = Session()
         session.add(jobDataSubmit)
