@@ -22,7 +22,7 @@ from db import dp_cluster_status_table as models
 from db import crud, schema, database
 
 
-dbase = database.Database(Path(__file__).parent.parent/"data"/"cluster.db")
+dbase = database.Database(str(Path(__file__).parent.parent/"data"/"cluster.db"))
 sessionlocal = dbase.session
 engine = dbase.engine
 
