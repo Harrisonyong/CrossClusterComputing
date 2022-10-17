@@ -16,22 +16,33 @@ dbConfig = Configuration.dbConfig()
 engine=create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
+
 Base = declarative_base()
+
 
 class DBService:
     '数据库服务，统一进行数据库的增删改查'
-    def query_all(self, Base):
+
+    def query_all(self, Base) -> list:
         session = Session()
         items = session.query(Base).all()
         session.close()
         return items
 
-    def addItem(self, Base):
+    def addItem(self, item):
         session = Session()
-        session.add(Base)
+        session.add(item)
         session.commit()
         session.close()
     
+    def addBatchItem(self, items):
+        session = Session()
+        session.add_all(items)
+        session.commit()
+        session.close()
 
     def dbConfig():
         return dbConfig
+
+
+dbService = DBService()
