@@ -9,9 +9,10 @@
 '''
 from enum import unique
 from operator import index
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
+from sqlite3 import Date
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
-from .database import Base
+from .db_service import Base
 
 
 class ClusterStatus(Base):
@@ -21,6 +22,10 @@ class ClusterStatus(Base):
     state = Column(String)  # 集群状态
     ip = Column(String(255), index=True, unique=True)  # 集群ip
     port = Column(Integer)  # 连接端口
+    createtime = Column(DateTime, server_default = func.now(), comment = "创建时间")
+    updatetime = Column(DateTime, server_default = func.now(), onupdate = func.now(), comment = "修改时间")
+    partitions = relationship("PartitionStatus", back_populates = "clusterstatus")
+    
 
 
 class PartitionStatus(Base):
@@ -34,4 +39,4 @@ class PartitionStatus(Base):
     nodes_avial = Column(Integer)  # 可用节点数
     state = Column(String(255), index=True)  # 节点状态
     clusterstatus = relationship(
-        "ClusterStatus", back_populates="dp_partition_table")
+        "ClusterStatus", back_populates="partitions")

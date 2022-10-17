@@ -7,25 +7,25 @@
 @Author :yangqinglin
 @email :yangqinglin@zhejianglab.com
 '''
+from http.client import ImproperConnectionState
 import sys
 from pathlib import Path
+from typing import List
+from unicodedata import name
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.log import Log
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from functools import partial
 from utils.scheduler import Scheduler
 from utils.config import Configuration as config
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from slurm_monitor.serverconn import SlurmServer
 from sqlalchemy.orm import Session
 from db import dp_cluster_status_table as models
-from db import crud, schema, database
+from db import db_service as database
+from db import crud, schema
 
-
-dbase = database.Database(str(Path(__file__).parent.parent/"data"/"cluster.db"))
-sessionlocal = dbase.session
-engine = dbase.engine
-
+models.Base.metadata.create_all(bind=database.engine)
 
 router = APIRouter(
     prefix="/monitor",
@@ -38,6 +38,12 @@ scheduler = Scheduler.AsyncScheduler()
 job_listener = partial(Scheduler.job_listener,
                        logger=logger, scheduler=scheduler)
 
+def get_db():
+    db = database.Session()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def slurm_search(host, port, user, password):
     command = "export PATH=/usr/local/slurm-21.08.8/bin; sinfo"
@@ -83,6 +89,14 @@ async def stop():
     scheduler.remove_all_jobs(jobstore=None)
 
 
+@router.post("/cluster/", response_model=schema.Cluster)
+def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
+    db_cluster = crud.get_cluster_by_name(db,  cluster_name = cluster.cluster_name)
+    if db_cluster:
+        raise HTTPException(status_code=400, detail = "cluster is already existed")
+    return crud.create_cluster(db=db, cluster=cluster)
 
-
-
+@router.get("/clusters/", response_model=List[schema.Cluster])
+def read_clusters(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
+    clusters = crud.get_clusters(db, skip=skip, limit=limit)
+    return clusters

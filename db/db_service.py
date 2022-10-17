@@ -5,16 +5,16 @@
 # date: 2022/10/14 Fri 15:27:45
 # description: 该服务用于与数据库进行交互
 
-from sqlalchemy import create_engine, and_, or_
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-
 from utils.config import Configuration
 from sqlalchemy.ext.declarative import declarative_base
 
+__all__ = ["DBService", "engine", "Session", "Base"]
+
 dbConfig = Configuration.dbConfig()
-engine=create_engine(dbConfig["file"])
-Session = sessionmaker(bind=engine)
+engine=create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
+Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 Base = declarative_base()
 
@@ -32,5 +32,6 @@ class DBService:
         session.commit()
         session.close()
     
+
     def dbConfig():
         return dbConfig
