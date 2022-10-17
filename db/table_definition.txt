@@ -24,3 +24,11 @@ CREATE TABLE dp_job_data_submit_table (
     transfer_begin_time    STRING,
     transfer_end_time      STRING
 );
+
+# 单条作业数据， 其中job_total_id为外键，关联dp_job_data_submit_table中job_total_id
+CREATE TABLE dp_single_job_data_item_table (
+    primary_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_total_id         REFERENCES dp_job_data_submit_table (job_total_id) 
+                         NOT NULL,
+    data_file    STRING
+);
