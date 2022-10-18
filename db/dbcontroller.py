@@ -17,7 +17,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.config import Configuration as config
 
 from .dp_cluster_status_table import ClusterStatus
-dbService = DBService()
+from .db_service import dbService
 
 router = APIRouter(
     prefix="/db-controller",
@@ -32,7 +32,7 @@ async def welcome():
 
 @router.get("/db-config")
 async def dbConfig():
-    return dbService.dbConfig()
+    return Response.success(msg="查询集群配置成功", data=dbService.dbConfig())
 
 @router.get("/all-clusters")
 async def allClusters():    

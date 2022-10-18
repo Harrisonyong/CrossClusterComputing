@@ -38,7 +38,7 @@ class DBService:
         session.commit()
         session.close()
 
-    def dbConfig():
+    def dbConfig(self):
         return dbConfig
 
 
