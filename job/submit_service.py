@@ -7,23 +7,36 @@
 
 
 import time
+import os
+from typing import List
 from db.db_service import DBService
 from db.dp_job_data_submit_table import JobDataSubmit
+from db.dp_single_job_data_item_table import SingleJobDataItem
 
 from job.job_type import Submit
+from db.db_service import dbService
 
-dbService = DBService()
 
 class SubmitService:
     '作业数据投递服务，接收页面调用，把合法的请求转化为记录进行存储'
     
-    def save_submit(self, submit:Submit):
+    def save_submit(self, jobDataSubmit:JobDataSubmit):
         '保存用户的作业投递数据'
-        jobDataSubmit=self.fromUserSubmit(submit)
+
+        files_to_compute = os.listdir(jobDataSubmit.data_dir)
+        singleJobDataItems = []
+        for file in files_to_compute:
+            singleJobDataItems.append(SingleJobDataItem(
+                job_total_id = jobDataSubmit.job_total_id,
+                data_file = file
+            )
+            )
         dbService.addItem(jobDataSubmit)
-        print("记录存储成功")
+        dbService.addBatchItem(singleJobDataItems)
+        return jobDataSubmit
 
     def all(self):
+        List
         return dbService.query_all(JobDataSubmit)
 
 
