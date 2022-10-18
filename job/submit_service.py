@@ -13,29 +13,63 @@ from typing import List
 from db.db_service import DBService
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_single_job_data_item_table import SingleJobDataItem
+from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 
 from job.job_type import Submit
 from db.db_service import dbService
+from utils.log import Log
+from functools import partial
+
+from utils.scheduler import Scheduler
+scheduler = Scheduler.AsyncScheduler()
+logger = Log.ulog(logfile="single-job-data-item-scan.log")
+job_listener = partial(Scheduler.job_listener,
+                       logger=logger, scheduler=scheduler)
+
+def handleJobDataItem():
+    '''执行定期扫描程序，处理所有的作业数据条目'''
+    items = dbService.query_all(SingleJobDataItem)
+    print("时刻{tm}共有{size}条作业数据条目待处理".format(size=len(items), tm=time.strftime('%Y:%m:%d %H:%M:%S',
+          time.localtime(int(time.time())))))
+
+
+def add_job_data_item_scan_job(interval: int):
+    '''添加定时单条数据扫描程序'''
+    print("Enter add_job_data_item_scan_job")
+    scheduler.add_listener(job_listener, EVENT_JOB_ERROR |
+                           EVENT_JOB_MISSED | EVENT_JOB_EXECUTED)
+    scheduler._logger = logger
+    scheduler.add_job(handleJobDataItem, args=[], id=f"single-thread",
+                      trigger="interval", seconds=interval, replace_existing=True)
+    scheduler.start()
+    print("定时扫描任务监控任务启动")
+
 
 class SubmitService:
     '作业数据投递服务，接收页面调用，把合法的请求转化为记录进行存储'
 
     def save_submit(self, jobDataSubmit: JobDataSubmit):
         '保存用户的作业投递数据'
-
-        files_to_compute = os.listdir(jobDataSubmit.data_dir)
-        singleJobDataItems = []
         job_total_id = jobDataSubmit.job_total_id
+        singleJobDataItems = self.getSingleJobDataItems(jobDataSubmit)
+        dbService.addItem(jobDataSubmit)
+
+        # 使用异步线程处理该投递作业相关的数据条目
+        threading.Thread(target=self.transfer, args=(
+            job_total_id, singleJobDataItems), name="异步转换线程:"+str(job_total_id)).start()
+
+        return jobDataSubmit
+
+    def getSingleJobDataItems(self, jobDataSubmit: JobDataSubmit):
+        files_to_compute = os.listdir(jobDataSubmit.data_dir)
+
+        singleJobDataItems = []
         for file in files_to_compute:
             singleJobDataItems.append(SingleJobDataItem(
                 job_total_id=jobDataSubmit.job_total_id,
-                data_file=file)
-            )
-        dbService.addItem(jobDataSubmit)
-        print("外部处理线程为: ", threading.currentThread().getName())
-        threading.Thread(target=self.transfer, args=(
-            job_total_id, singleJobDataItems), name="异步转换线程:"+str(job_total_id)).start()
-        return jobDataSubmit
+                data_file=file))
+        assert len(singleJobDataItems) > 0, "数据目录下没有文件！"        
+        return singleJobDataItems
 
     def all(self):
         return dbService.query_all(JobDataSubmit)
