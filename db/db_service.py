@@ -9,16 +9,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from utils.config import Configuration
 from sqlalchemy.ext.declarative import declarative_base
-
+from utils.config import dbConfig
 __all__ = ["DBService", "engine", "Session", "Base"]
 
-dbConfig = Configuration.dbConfig()
+
 engine=create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-
-
 Base = declarative_base()
-
 
 class DBService:
     '数据库服务，统一进行数据库的增删改查'
