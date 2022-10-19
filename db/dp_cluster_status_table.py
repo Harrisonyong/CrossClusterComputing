@@ -36,7 +36,9 @@ class PartitionStatus(Base):
     partition_name = Column(String(255))  # patition 名称
     avail = Column(String(255))  # 是否可用
     nodes = Column(Integer)  # 总体节点数
-    nodes_avial = Column(Integer)  # 可用节点数
+    nodes_avail = Column(Integer)  # 可用节点数
     state = Column(String(255), index=True)  # 节点状态
+    createtime = Column(DateTime, server_default = func.now(), comment = "创建时间")
+    updatetime = Column(DateTime, server_default = func.now(), onupdate = func.now(), comment = "修改时间")
     clusterstatus = relationship(
         "ClusterStatus", back_populates="partitions")

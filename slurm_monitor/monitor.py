@@ -7,7 +7,6 @@
 @Author :yangqinglin
 @email :yangqinglin@zhejianglab.com
 '''
-from http.client import ImproperConnectionState
 import sys
 from pathlib import Path
 from typing import List
@@ -63,8 +62,15 @@ async def add_job():
     scheduler.add_listener(job_listener, EVENT_JOB_ERROR |
                            EVENT_JOB_MISSED | EVENT_JOB_EXECUTED)
     scheduler._logger = logger
+    db = Depends(get_db)
     for name, conf in config.ServiceConfig():
         host, port, user, password = conf.host, conf.port, conf.user, conf.password
+        cluster = schema.ClusterCreate(cluster_name=name, ip=host, port=port, state="avail")
+        db_cluster = crud.get_cluster_by_name(db, cluster_name=name)
+        if db_cluster:
+            print(f'{name} is exists')
+        else:
+            crud.create_cluster(db, cluster=cluster)
         scheduler.add_job(slurm_search, args=[
                           host, port, user, password], id=f"{name}", trigger="interval", seconds=5, replace_existing=True)
         print(f"定时监控任务{name}启动")
@@ -100,3 +106,28 @@ def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
 def read_clusters(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
     clusters = crud.get_clusters(db, skip=skip, limit=limit)
     return clusters
+
+@router.get("/clust/{ip}", response_model=schema.Cluster)
+def read_cluster(ip:str, db:Session=Depends(get_db)):
+    db_cluster = crud.get_cluster_by_ip(db, ip = ip)
+    if db_cluster is None:
+        raise HTTPException(status_code=404, detail="cluster not found")
+    return db_cluster
+
+@router.post("/partition/")
+def create_partition(partition:schema.PartitionCreate, db:Session = Depends(get_db)):
+    db_partition = crud.get_partition_by_cluster_partition(db, cluster_name=partition.cluster_name, partition_name=partition.partition_name)
+    if db_partition:
+        result = crud.update_partition(db=db, cluster_name=partition.cluster_name, partition_name=partition.partition_name, nodes=partition.nodes, nodes_avail=partition.nodes_avail, avail=partition.avail, state=partition.state)
+        return result
+    else:
+        crud.create_partition(db=db, partition=partition)
+        return {201: "create success"}
+
+
+@router.get("/partitions/", response_model=List[schema.Partition])
+def get_partitions(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
+    partitions = crud.get_partitions(db, skip=skip, limit=limit)
+    return partitions
+
+
