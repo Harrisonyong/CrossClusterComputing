@@ -1,5 +1,13 @@
-from enum import unique
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
+#!/usr/bin/env python
+# -*- coding:UTF-8 -*-
+# author: songquanheng
+# email: wannachan@outlook.com
+# date: 2022/10/19 周三 16:07:44
+# description: 作业数据投递表的概览数据
+
+
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, ForeignKey, create_engine, func, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
@@ -23,7 +31,7 @@ class JobDataSubmit(Base):
     '单条执行耗费资源，使用json'
     single_item_allocation=Column(String)
     '记录创建时间'
-    create_time=Column(String)
+    create_time=Column(DateTime, nullable=False, default=datetime.now)
 
 
     '是否已经转化, 转化指的是把批处理的所有作业条目存储数据库中'
@@ -31,7 +39,7 @@ class JobDataSubmit(Base):
     '转化状态'
     transfer_state=Column(String)
     '转化开始时间'
-    transfer_begin_time=Column(String)
+    transfer_begin_time=Column(DateTime)
     '转化结束时间'
-    transfer_end_time=Column(String)
+    transfer_end_time=Column(DateTime)
 

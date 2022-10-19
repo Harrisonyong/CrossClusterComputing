@@ -6,6 +6,7 @@
 # description: 该文件负责把用户的作业投递请求创建修改成作业投递记录，存入作业数据投递数据表中
 
 
+from datetime import datetime
 import time
 import os
 import threading
@@ -13,6 +14,9 @@ from typing import List
 from db.db_service import DBService
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_single_job_data_item_table import SingleJobDataItem
+from job.SingleJobDataItemService import singleJobDataItemService
+from job.submit_state import SubmitState
+from utils.date_utils import dateUtils
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 
 from job.job_type import Submit
@@ -28,8 +32,11 @@ job_listener = partial(Scheduler.job_listener,
 
 def handleJobDataItem():
     '''执行定期扫描程序，处理所有的作业数据条目'''
-    items = dbService.query_all(SingleJobDataItem)
-    print("时刻{tm}共有{size}条作业数据条目待处理".format(size=len(items), tm=time.strftime('%Y:%m:%d %H:%M:%S',
+    groups = singleJobDataItemService.groupByJobTotalId()
+    singleJobDataItemService.allJobTotalId()
+    print(type(groups))
+    
+    print("时刻{tm}共有{size}类,内容{con}的作业数据条目待处理".format(size=len(groups),con=[group[0] for group in groups], tm=time.strftime('%Y:%m:%d %H:%M:%S',
           time.localtime(int(time.time())))))
 
 
@@ -83,11 +90,10 @@ class SubmitService:
             user_name=submit.user,
             execute_file_path=submit.execute_file_path,
             single_item_allocation=submit.resource_per_item.json(),
-            transfer_flag='false',
-            transfer_state='unhandle',
-            create_time='2022-10-14 11:11:41',
-            transfer_begin_time='',
-            transfer_end_time='',
+            transfer_flag=str(False),
+            transfer_state=SubmitState.UN_HANDLE.value,
+            transfer_begin_time=datetime.now(),
+            transfer_end_time=datetime.now(),
         )
         return dataSubmit
 
