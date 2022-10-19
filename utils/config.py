@@ -60,3 +60,6 @@ class Configuration:
     def dbConfig():
         db = ConfigReader("config/db.ini").config("db")
         return {"host": db.host, "file": db.file}
+
+'''sqlite数据库配置对象'''
+dbConfig = Configuration.dbConfig()

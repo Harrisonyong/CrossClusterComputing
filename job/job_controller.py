@@ -4,8 +4,8 @@
 # email: wannachan@outlook.com
 # date: 2022/10/13 周四 16:38:12
 # description: 该文件用于与用户进行HTTP交互，以进行作业数据投递和查看
-
 import sys
+import os
 
 from fastapi import APIRouter
 from pathlib import Path
@@ -32,8 +32,13 @@ async def welcome():
 
 @router.post("/job-submit/create")
 async def create_submit(submit: Submit):
-
-    submitService.save_submit(submit)
+    print(submit.json())
+    assert os.path.exists(submit.data_dir), "not found {} file.".format(submit.data_dir) 
+    assert os.path.exists(submit.execute_file_path), "not found {} file.".format(submit.execute_file_path)
+    
+    jobDataSubmit = submitService.fromUserSubmit(submit)
+    submitService.save_submit(jobDataSubmit)
+    
     return Response.success(data=submit)
 
 @router.get("/job-sumit/all")
