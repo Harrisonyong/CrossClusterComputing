@@ -22,3 +22,6 @@ class SingleJobDataItem(Base):
         JobDataSubmit.job_total_id), index=True)
     # 待处理的数据文件    
     data_file = Column(String)
+
+    def __repr__(self) -> str:
+        return f"SingleJobDataItem<primary_id: {self.primary_id}, job_total_id: {self.job_total_id}, data_file: {self.data_file}>"
