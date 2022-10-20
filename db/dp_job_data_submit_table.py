@@ -23,23 +23,24 @@ class JobDataSubmit(Base):
     '整体作业投递批号'
     job_total_id = Column(Integer)
     '作业名称'
-    job_name=Column(String)
+    job_name = Column(String)
     '待处理数据目录'
-    data_dir=Column(String)
+    data_dir = Column(String)
     '执行文件目录'
-    execute_file_path=Column(String)
+    execute_file_path = Column(String)
     '单条执行耗费资源，使用json'
-    single_item_allocation=Column(String)
+    single_item_allocation = Column(String)
     '记录创建时间'
-    create_time=Column(DateTime, nullable=False, default=datetime.now)
-
+    create_time = Column(DateTime, nullable=False, default=datetime.now)
 
     '是否已经转化, 转化指的是把批处理的所有作业条目存储数据库中'
-    transfer_flag=Column(String)
+    transfer_flag = Column(String)
     '转化状态'
-    transfer_state=Column(String)
+    transfer_state = Column(String)
     '转化开始时间'
-    transfer_begin_time=Column(DateTime)
+    transfer_begin_time = Column(DateTime)
     '转化结束时间'
-    transfer_end_time=Column(DateTime)
+    transfer_end_time = Column(DateTime)
 
+    def __repr__(self):
+        return "<JobDataSubmit(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
