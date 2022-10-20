@@ -1,29 +1,20 @@
-CREATE TABLE dp_cluster_status_table (
-    primary_id INTEGER PRIMARY KEY AUTOINCREMENT
-                       NOT NULL,
-    name       STRING  UNIQUE
-                       NOT NULL,
-    state      STRING,
-    ip         STRING,
-    user_name  STRING,
-    password   STRING
+# 作业投递表定义
+CREATE TABLE dp_job_data_submit_table (
+    primary_id             INTEGER  PRIMARY KEY AUTOINCREMENT,
+    user_name              STRING,
+    job_total_id           BIGINT   UNIQUE
+                                    NOT NULL,
+    job_name               STRING   NOT NULL,
+    data_dir               STRING   NOT NULL,
+    execute_file_path      STRING   NOT NULL,
+    single_item_allocation STRING   NOT NULL,
+    create_time            DATETIME,
+    transfer_flag          STRING   NOT NULL,
+    transfer_state         STRING   NOT NULL,
+    transfer_begin_time    DATETIME,
+    transfer_end_time      DATETIME
 );
 
-CREATE TABLE dp_job_data_submit_table (
-    primary_id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_name              STRING,
-    job_total_id           BIGINT  UNIQUE
-                                   NOT NULL,
-    job_name               STRING  NOT NULL,
-    data_dir               STRING  NOT NULL,
-    execute_file_path      STRING  NOT NULL,
-    single_item_allocation STRING  NOT NULL,
-    create_time            STRING,
-    transfer_flag          STRING  NOT NULL,
-    transfer_state         STRING  NOT NULL,
-    transfer_begin_time    STRING,
-    transfer_end_time      STRING
-);
 
 # 单条作业数据， 其中job_total_id为外键，关联dp_job_data_submit_table中job_total_id
 CREATE TABLE dp_single_job_data_item_table (
