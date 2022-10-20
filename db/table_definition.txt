@@ -32,3 +32,37 @@ CREATE TABLE dp_single_job_data_item_table (
                          NOT NULL,
     data_file    STRING
 );
+
+CREATE TABLE dp_cluster_status_table (
+    primary_id   INTEGER       NOT NULL,
+    cluster_name VARCHAR,
+    state        VARCHAR,
+    ip           VARCHAR (255),
+    port         INTEGER,
+    user         VARCHAR (255),
+    password     VARCHAR (255),
+    createtime   DATETIME,
+    updatetime   DATETIME,
+    PRIMARY KEY (
+        primary_id
+    )
+);
+
+CREATE TABLE dp_partition_table (
+    primary_id     INTEGER       NOT NULL,
+    cluster_name   VARCHAR (255),
+    partition_name VARCHAR (255),
+    avail          VARCHAR (255),
+    nodes          INTEGER,
+    nodes_avail    INTEGER,
+    state          VARCHAR (255),
+    createtime     DATETIME,
+    updatetime     DATETIME,
+    PRIMARY KEY (
+        primary_id
+    ),
+    FOREIGN KEY (
+        cluster_name
+    )
+    REFERENCES dp_cluster_status_table (cluster_name) 
+);

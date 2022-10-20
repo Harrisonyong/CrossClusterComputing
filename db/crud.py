@@ -49,7 +49,7 @@ def create_cluster(db:Session, cluster:schema.ClusterCreate):
     :param cluster:集群模型
     :return:根据集群名称、ip、端口创建的集群信息
     """
-    db_cluster = models.ClusterStatus(cluster_name=cluster.cluster_name, ip=cluster.ip, port = cluster.port, state = cluster.state)
+    db_cluster = models.ClusterStatus(cluster_name=cluster.cluster_name, ip=cluster.ip, port = cluster.port, state = cluster.state, user=cluster.user, password = cluster.password)
     db.add(db_cluster)
     db.commit()
     db.refresh(db_cluster)
@@ -103,5 +103,6 @@ def update_partition(db:Session, cluster_name: str, partition_name:str, nodes:in
     :param state:节点可用信息
     :return 更新的分区信息
     """
-    db.query(models.PartitionStatus).filter(models.PartitionStatus.cluster_name == cluster_name, models.PartitionStatus.partition_name == partition_name).update({"nodes":nodes, "nodes_avail":nodes_avail, "avail": avail, "state": state})
-    return {202: "update success"}
+    db_partition = db.query(models.PartitionStatus).filter(models.PartitionStatus.cluster_name == cluster_name, models.PartitionStatus.partition_name == partition_name).update({"nodes":nodes, "nodes_avail":nodes_avail, "avail": avail, "state": state})
+    db.commit()
+    return db_partition

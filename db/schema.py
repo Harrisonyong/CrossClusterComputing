@@ -19,11 +19,11 @@ class PartitionBase(BaseModel):
     nodes: int
     nodes_avail: int
     state: str
-    partition_name: str
 
 class Partition(PartitionBase):
     primary_id: int
     cluster_name: str
+    partition_name: str
     createtime: datetime
     updatetime: datetime
     class Config:
@@ -31,15 +31,20 @@ class Partition(PartitionBase):
 
 class PartitionCreate(PartitionBase):
     cluster_name: str
+    partition_name: str
+
+class ParitionUpdate(PartitionBase):
+    pass
 
 class ClusterBase(BaseModel):
     cluster_name:str
     ip: str
     port:int
+    user: str
 
 class Cluster(ClusterBase):
-    primary_id:int
-    state:str
+    primary_id: int
+    state: str
     createtime: datetime
     updatetime: datetime
     partitions: List[Partition] = []
@@ -48,4 +53,5 @@ class Cluster(ClusterBase):
         orm_mode = True
 
 class ClusterCreate(ClusterBase):
-    state:str
+    state: str
+    password: str
