@@ -34,9 +34,9 @@ job_listener = partial(Scheduler.job_listener,
 def handleJobDataItem():
     '''执行定期扫描程序，处理所有的作业数据条目'''
     groups = singleJobDataItemService.groupByJobTotalId()
-    singleJobDataItemService.allJobTotalId()
-    print(type(groups))
-    
+    job_total_ids = [group[0] for group in groups]
+    runningRecords = dBJobSubmitService.getSubmitRecords(job_total_ids)
+
     print("时刻{tm}共有{size}类,内容{con}的作业数据条目待处理".format(size=len(groups),con=[group[0] for group in groups], tm=time.strftime('%Y:%m:%d %H:%M:%S',
           time.localtime(int(time.time())))))
 
