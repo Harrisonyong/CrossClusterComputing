@@ -32,6 +32,9 @@ router = APIRouter(
     responses={404: {"description": "Not Found any slurm server"}}
 )
 
+Log = Log()
+Scheduler = Scheduler()
+
 logger = Log.ulog(logfile="monitor.log")
 scheduler = Scheduler.AsyncScheduler()
 job_listener = partial(Scheduler.job_listener,
@@ -62,7 +65,7 @@ async def add_job():
     scheduler.add_listener(job_listener, EVENT_JOB_ERROR |
                            EVENT_JOB_MISSED | EVENT_JOB_EXECUTED)
     scheduler._logger = logger
-    db = Depends(get_db)
+    db = database.Session()
     for name, conf in config.ServiceConfig():
         host, port, user, password = conf.host, conf.port, conf.user, conf.password
         cluster = schema.ClusterCreate(cluster_name=name, ip=host, port=port, user=user, password=password,state="avail")
@@ -74,6 +77,7 @@ async def add_job():
         scheduler.add_job(slurm_search, args=[
                           name,host, port, user, password], id=f"{name}", trigger="interval", seconds=5, replace_existing=True)
         print(f"定时监控任务{name}启动")
+    db.close()
     return scheduler
 
 
