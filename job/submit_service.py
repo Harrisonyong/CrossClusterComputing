@@ -21,6 +21,7 @@ from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MI
 
 from job.job_type import Submit
 from db.db_service import dbService
+from job.db_job_submit import dBJobSubmitService
 from utils.log import Log
 from functools import partial
 
@@ -69,17 +70,19 @@ class SubmitService:
 
     def getSingleJobDataItems(self, jobDataSubmit: JobDataSubmit):
         files_to_compute = os.listdir(jobDataSubmit.data_dir)
-
         singleJobDataItems = []
         for file in files_to_compute:
             singleJobDataItems.append(SingleJobDataItem(
                 job_total_id=jobDataSubmit.job_total_id,
                 data_file=file))
-        assert len(singleJobDataItems) > 0, "数据目录下没有文件！"        
+        assert len(singleJobDataItems) > 0, "数据目录下没有文件！"
+        print("作业号：", jobDataSubmit.job_total_id, " 共有待处理的数据条目: ", len(singleJobDataItems))      
         return singleJobDataItems
 
     def all(self):
         return dbService.query_all(JobDataSubmit)
+
+    
 
     def fromUserSubmit(self, submit: Submit):
         '从用户传入的作业投递数据构造投递实体与数据库映射'
@@ -97,15 +100,16 @@ class SubmitService:
         )
         return dataSubmit
 
-    def transfer(self, job_total_id, singleJobDataItems: list):
+    def transfer(self, job_total_id: int, singleJobDataItems: list):
+        '''转换过程，该函数应该为事务，保持一致性。'''
+        '''同时，当前未考虑异常情况，即线程崩溃，若要解决该问题，可以保存线程号'''
+        print("异步开始, 处理线程为: ", threading.currentThread().getName(), "线程号：", threading.currentThread().native_id)
+        
         # 异步开始
         # 那条记录状态更新为正在处理中
         print("记录更新为正在处理中, 记录批号", job_total_id)
-        print("异步开始, 处理线程为: ", threading.currentThread().getName())
-
+        dBJobSubmitService.updateSubmitRecordHandling(job_total_id)
         dbService.addBatchItem(singleJobDataItems)
-        time.sleep(5)
-        print("处理完成")
-        print("异步完成")
+        dBJobSubmitService.updateSubmitRecordHandled(job_total_id)
         # 那条记录状态更新为处理完成
         # 异步完成

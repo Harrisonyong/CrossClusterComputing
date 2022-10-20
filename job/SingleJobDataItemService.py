@@ -31,6 +31,12 @@ class SingleJobDataItemService:
         dataItem.data_file = data_file
         dbService.addItem(dataItem)
 
+    def addBatch(self, singleJobDataItems: List[SingleJobDataItem]):
+        '添加一组作业数据条目到数据库中'
+        assert len(singleJobDataItems) > 0, "确保存在插入数据库的作业数据条目"
+        print("待处理的作业号为: ", singleJobDataItems[0].job_total_id)
+        dbService.addBatchItem(singleJobDataItems)
+
     def query_all(self):
         '查询作业数据表中的全部记录'
         return dbService.query_all(SingleJobDataItem)
@@ -64,7 +70,7 @@ def testAddBatch():
         )
         dataItems.append(item)
 
-    dbService.addBatchItem(dataItems)
+    singleJobDataItemService.addBatch(dataItems)
 
 
 def testGroup():
