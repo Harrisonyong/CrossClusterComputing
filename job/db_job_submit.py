@@ -36,25 +36,25 @@ class DBJobSubmitService:
 
     def getSubmitRecord(self, job_tatal_id: int) -> JobDataSubmit:
         '''根据job_total_id获取作业投递记录'''
-        session = Session()
-        result = session.query(JobDataSubmit).filter(
-            JobDataSubmit.job_total_id == job_tatal_id).first()
-        session.close()
-        return result
+
+        with Session() as session:
+            return session.query(JobDataSubmit).filter(JobDataSubmit.job_total_id == job_tatal_id).first()
+    
 
     def saveSubmitRecord(self, jobDataSubmit: JobDataSubmit):
-        session = Session()
-        session.add(jobDataSubmit)
-        session.commit()
-        session.close()
+        with Session() as session:
+            session.add(jobDataSubmit)
+            session.commit()
 
     def updateSubmitRecordHandling(self, job_total_id: int):
         """更新投递记录状态为处理中，并同时更新转换开始时间"""
-        session = Session()
-        session.query(JobDataSubmit).filter(
-            JobDataSubmit.job_total_id == job_total_id).update({JobDataSubmit.transfer_state: SubmitState.HANDLING.value, JobDataSubmit.transfer_begin_time: datetime.now()}, synchronize_session=False)
-        session.commit()
-        session.close()
+        with Session() as session:
+            session.query(JobDataSubmit).filter(
+            JobDataSubmit.job_total_id == job_total_id) \
+            .update({JobDataSubmit.transfer_state: SubmitState.HANDLING.value, 
+                JobDataSubmit.transfer_begin_time: datetime.now()}, synchronize_session=False)
+            session.commit()
+
 
     def updateSubmitRecordHandled(self, job_total_id: int):
         """更新投递记录状态为处理完成，并同时更新转换完成时间"""
@@ -66,20 +66,17 @@ class DBJobSubmitService:
 
     def getAllSubmitRecordOrderByCreateTime(self)->List[JobDataSubmit]:
         '按顺序获取所有的作业数据投递记录'
-        session = Session()
-        records = session.query(JobDataSubmit).order_by(JobDataSubmit.create_time)
-        session.close()
-        return records
+        with Session() as session:
+            return session.query(JobDataSubmit).order_by(JobDataSubmit.create_time)
+
 
     def getSubmitRecords(self, job_total_ids: List[int]) -> List[JobDataSubmit]:
         """
         根据job_total_id列表获取需要的作业投递记录
         param: job_total_ids 作业投递记录的整体作业号列表
         """
-        session = Session()
-        records = session.query(JobDataSubmit).filter(JobDataSubmit.job_total_id.in_(job_total_ids)).order_by(JobDataSubmit.create_time)
-        session.close()
-        return records
+        with Session() as session:
+            return session.query(JobDataSubmit).filter(JobDataSubmit.job_total_id.in_(job_total_ids)).order_by(JobDataSubmit.create_time)
 
 dBJobSubmitService = DBJobSubmitService()
 
