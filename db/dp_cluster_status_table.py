@@ -26,6 +26,8 @@ class ClusterStatus(Base):
     createtime = Column(DateTime(timezone=True), default = datetime.now, comment = "创建时间")
     updatetime = Column(DateTime(timezone=True), default = datetime.now, onupdate = datetime.now, comment = "修改时间")
     partitions = relationship("PartitionStatus", back_populates = "clusterstatus")
+    def __repr__(self) -> str:
+        return "<ClusterStatus(clustername=%s, ip=%s, state=%s)>" %(self.cluster_name, self.ip, self.state)
     
 
 
@@ -43,3 +45,6 @@ class PartitionStatus(Base):
     updatetime = Column(DateTime(timezone=True), default = datetime.now, onupdate = datetime.now, comment = "修改时间")
     clusterstatus = relationship(
         "ClusterStatus", back_populates="partitions")
+
+    def __repr__(self) -> str:
+        return "<PartitionStatus(clustername=%s, partion_name=%s, nodes_avail=%s, clusterstatus=%s)>" %(self.cluster_name, self.partition_name, self.nodes_avail, self.clusterstatus)
