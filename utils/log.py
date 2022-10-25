@@ -57,5 +57,6 @@ class Log:
             logger.remove(handler_id=None)
         format = "{time:YYYY-MM-DD HH:mm:ss} {level} From File_{file} Function_{function} Line_{line} : {message}"
         logger.add(f"{cls.__get_file__(logfile)}", rotation="200MB", encoding="utf-8", enqueue=True,
-                   retention="30 days", format=format, compression='zip', level="INFO")
-        return logger
+                   retention="30 days", format=format, compression='zip', level="INFO", filter=lambda record: record["extra"]["name"] == logfile)
+        logger_dir = logger.bind(name=logfile)
+        return logger_dir
