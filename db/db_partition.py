@@ -60,12 +60,12 @@ class DBPartionService:
         :param db: 数据库会话
         :param skip: 开始位置
         :param limit: 限制数量
-        :return:集群信息列表
+        :return:分区信息列表
         """
         with Session() as session:
             return session.query(PartitionStatus) \
             .options(selectinload(PartitionStatus.clusterstatus)) \
-                .filter(PartitionStatus.nodes_avail > 0 ).offset(skip).limit(limit).order_by(PartitionStatus.nodes_avail).all()
+                .filter(PartitionStatus.nodes_avail > 0 ).offset(skip).limit(limit).all()
 
 
 
