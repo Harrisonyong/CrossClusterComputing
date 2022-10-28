@@ -42,6 +42,7 @@ class JobDataSubmit(Base):
     '转化结束时间'
     transfer_end_time = Column(DateTime)
     
+    
 
     def __repr__(self):
         return "<JobDataSubmit(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
@@ -51,8 +52,9 @@ class JobDataSubmit(Base):
         返回该作业投递需要的节点数量,该值为大于0的浮点数
         倘若一个节点可以同时处理4个作业条目，则此作业条目的node值取值为1/4
         """
+
         
         resource = eval(self.single_item_allocation)
+        
         assert resource["node"] > 0
-
         return resource["node"]
