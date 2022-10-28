@@ -57,40 +57,53 @@ def schedule(runningSubmitRecords: List[JobDataSubmit], partions: List[Partition
             record.job_total_id))
         if not canSchdule(record, partions):
             continue
+        print("该作业：%d, 作业名称: %s可以被此时的分区列表进行调度" %
+              (record.job_total_id, record.job_name))
         schduleSubmitRecord(record, partions)
 
 
 def canSchdule(record: JobDataSubmit, partions: List[PartitionStatus]):
-    """判断该类型的作业是否可以被当前可用的分区进行调度"""
-    return True
+    """判断该类型的作业是否可以被当前可用的分区列表进行调度"""
+    for partion in partions:
+        return partion.canSchdule(record)
+    return False
 
 
-def schduleSubmitRecord(record: JobDataSubmit, partions: List[PartitionStatus]):
-    while canSchdule(record, partions):
-        availIndex = findAvailablePartion(record, partions)
-        handle(record, partions[availIndex])
-        del partions[availIndex]
+def schduleSubmitRecord(record: JobDataSubmit, partitions: List[PartitionStatus]):
+    "使用此组分区列表调度该作业投递记录"
+    while canSchdule(record, partitions):
+        availIndex = findAvailablePartion(record, partitions)
+        print(f"可用的索引为{availIndex}, 可用分区为: {partitions[availIndex]}")
+        handle(record, partitions[availIndex])
+        del partitions[availIndex]
 
 
 def findAvailablePartion(record: JobDataSubmit, partions: List[PartitionStatus]) -> int:
     """找到能够用于处理该作业条目的某个分区，返回可用的分区序号"""
-    return 0
+    for index, partion in enumerate(partions):
+        if partion.canSchdule(record):
+            return index
+    
+    raise Exception("在findAvailablePartion中，partions: %s, 无法调度作业: %s" %(partions, record))
 
 
 def handle(record: JobDataSubmit, partition: PartitionStatus):
-    "使用分区来处理record类型的作业条目"
-    maxNum = getMaxProcessNum(record, partition)
+    "使用分区partition来处理record类型的作业条目"
+
+    print(f"in handle, partition: {partition}")
+    maxNum = partition.numberCanSchdule(record)
     jobDataitems = singleJobDataItemService.queryAccordingIdAndLimit(
         record.job_total_id, maxNum)
     if len(jobDataitems) < maxNum:
         print("job_total_id=%s作业已经处理完成, 当前时刻=%s" %
               (record.job_total_id, dateUtils.nowStr()))
-    slurmBatchFilePath = getSlurmBatchFile(record, jobDataitems, partition)
+    
+    slurmBatchFilePath = getSlurmBatchFile(record, partition, jobDataitems)
     jobId = submitJob(slurmBatchFilePath, partition)
     # 写入运行作业信息
     # 移除作业条目
     # 触发分区状态修改
-    print("本次调度完成：分区名=%s,调度了%d的%d个作业条目, 作业数据条目为: %s" %(partition.partition_name, record.job_total_id, len(jobDataitems), [item.data_file for item in jobDataitems]))
+    print(f"本次调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(jobDataitems)}个作业条目, 作业数据条目为: {[item.data_file for item in jobDataitems]}")
 
 
 def submitJob(batchFile: str, partition: PartitionStatus):
@@ -100,15 +113,16 @@ def submitJob(batchFile: str, partition: PartitionStatus):
     """
     return 3445
 
+
 def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:
     """"获取此分区能够处理的record最大能力: 即同时处理record的作业条目数量"""
     return 40
 
 
-def getSlurmBatchFile(record: JobDataSubmit, partion: PartitionStatus, jobDataitems: List[SingleJobDataItem]) -> str:
+def getSlurmBatchFile(record: JobDataSubmit, partition: PartitionStatus, jobDataitems: List[SingleJobDataItem]) -> str:
     "根据作业和分区以及待处理的作业条目信息生成批处理脚本"
-
-    resourceDescriptor = getResourceDescriptor(record, partion)
+    print(f"in getSlurmBatchFile, partition: {partition}")
+    resourceDescriptor = getResourceDescriptor(record, partition)
     jobDescriptor = getJobDescriptor(record, jobDataitems)
     batchFileName = getSlurmBatchFileName(record)
     abosluteBatchFileName = sbatch_file_path+os.linesep+batchFileName
@@ -117,9 +131,13 @@ def getSlurmBatchFile(record: JobDataSubmit, partion: PartitionStatus, jobDatait
     return abosluteBatchFileName
 
 
-def getResourceDescriptor(record: JobDataSubmit, partion: PartitionStatus) -> str:
+def getResourceDescriptor(record: JobDataSubmit, partition: PartitionStatus) -> str:
+    print(f"record: {record}, partition: {partition}")
     """获取资源描述信息"""
-    return "#!/bin/bash" + os.linesep+"# SBATCH -J %s-%s-%s" % (getSlurmBatchFileName(record))+os.linesep+"# SBATCH -N %d" % (partion.nodes_avail)+os.linesep+"# SBATCH -p %s" % (partion.partition_name)+os.linesep
+    resourceStr = "#!/bin/bash" + os.linesep+"#SBATCH -J %s" % (getSlurmBatchFileName(record))+os.linesep+"#SBATCH -N %d" % (partition.nodes_avail)+os.linesep+"#SBATCH -p %s" % (partition.partition_name)+os.linesep
+    print(f"resourceStr : {resourceStr}")
+
+    return resourceStr
 
 
 def getJobDescriptor(record: JobDataSubmit, jobDataitems: List[SingleJobDataItem]) -> str:
@@ -129,7 +147,7 @@ def getJobDescriptor(record: JobDataSubmit, jobDataitems: List[SingleJobDataItem
     return exeStatements
 
 
-def getSlurmBatchFileName(record: JobDataSubmit):
+def getSlurmBatchFileName(record: JobDataSubmit) -> str:
     """根据作业信息和根目录获取批处理作业文件名称"""
     return "%s-%s-%s" % (record.job_name, record.job_total_id, dateUtils.nowStr())
 
@@ -170,8 +188,8 @@ class SubmitService:
                 job_total_id=jobDataSubmit.job_total_id,
                 data_file=file))
         assert len(singleJobDataItems) > 0, "数据目录下没有文件！"
-        print("作业号：", jobDataSubmit.job_total_id, " 共有待处理的数据条目: ", len(singleJobDataItems))
-
+        print("作业号：", jobDataSubmit.job_total_id,
+              " 共有待处理的数据条目: ", len(singleJobDataItems))
 
     def all(self):
         return dbService.query_all(JobDataSubmit)
