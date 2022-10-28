@@ -11,6 +11,8 @@ from ast import Str
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
+
+from db.dp_job_data_submit_table import JobDataSubmit
 from .db_service import Base
 
 
@@ -48,3 +50,6 @@ class PartitionStatus(Base):
 
     def __repr__(self) -> str:
         return "<PartitionStatus(clustername=%s, partion_name=%s, nodes_avail=%s, clusterstatus=%s)>" %(self.cluster_name, self.partition_name, self.nodes_avail, self.clusterstatus)
+
+    def canSchdule(self, record: JobDataSubmit):
+        return True
