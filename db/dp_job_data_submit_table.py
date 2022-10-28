@@ -21,7 +21,7 @@ class JobDataSubmit(Base):
     '用户名'
     user_name = Column(String)
     '整体作业投递批号'
-    job_total_id = Column(Integer)
+    job_total_id = Column(Integer,)
     '作业名称'
     job_name = Column(String)
     '待处理数据目录'
@@ -41,6 +41,7 @@ class JobDataSubmit(Base):
     transfer_begin_time = Column(DateTime)
     '转化结束时间'
     transfer_end_time = Column(DateTime)
+    job_data_items = relationship("SingleJobDataItem", back_populates = "job_data_submit")
 
     def __repr__(self):
         return "<JobDataSubmit(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
