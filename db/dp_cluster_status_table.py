@@ -51,5 +51,16 @@ class PartitionStatus(Base):
     def __repr__(self) -> str:
         return "<PartitionStatus(clustername=%s, partion_name=%s, nodes_avail=%s, clusterstatus=%s)>" %(self.cluster_name, self.partition_name, self.nodes_avail, self.clusterstatus)
 
-    def canSchdule(self, record: JobDataSubmit):
-        return True
+    def canSchdule(self, record: JobDataSubmit) -> bool:
+        "判断该分区是否可以调度作业投递记录"
+        return self.nodes_avail /(1.0*record.nodesNeeded()) >= 1
+        
+    def numberCanSchdule(self, record: JobDataSubmit) -> int:
+        """
+        该分区能够调度的作业数目
+        若作业概览记录需要2个节点完成一个条目，而该分区为1，则可调度的作业条目数为0
+        若分区的节点数为3，则可以调度1个作业条目
+        若分区的节点数为4，则可以调度的作业条目数为2
+        """
+        
+        return int(self.nodes_avail /(1.0*record.nodesNeeded()))
