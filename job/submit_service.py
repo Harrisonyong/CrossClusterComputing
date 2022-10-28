@@ -18,7 +18,7 @@ from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.submit_state import SubmitState
 from utils.date_utils import dateUtils
-from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
+# from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 
 from job.job_type import Submit
 from db.db_service import dbService
@@ -30,9 +30,6 @@ from db.db_partition import dBPartionService
 
 from utils.scheduler import Scheduler
 scheduler = Scheduler.AsyncScheduler()
-logger = Log.ulog(logfile="single-job-data-item-scan.log")
-job_listener = partial(Scheduler.job_listener,
-                       logger=logger, scheduler=scheduler)
 
 sbatch_file_path = "/root"
 
@@ -145,12 +142,8 @@ def genrateSlurmBatchFile(abosluteBatchFileName: str, resourceDescriptor: str, j
 def add_job_data_item_scan_job(interval: int):
     '''添加定时单条数据扫描程序'''
     print("Enter add_job_data_item_scan_job")
-    scheduler.add_listener(job_listener, EVENT_JOB_ERROR |
-                           EVENT_JOB_MISSED | EVENT_JOB_EXECUTED)
-    scheduler._logger = logger
     scheduler.add_job(handleJobDataItem, args=[], id=f"single-thread",
                       trigger="interval", seconds=interval, replace_existing=True)
-    scheduler.start()
     print("定时扫描任务监控任务启动")
 
 
@@ -177,9 +170,8 @@ class SubmitService:
                 job_total_id=jobDataSubmit.job_total_id,
                 data_file=file))
         assert len(singleJobDataItems) > 0, "数据目录下没有文件！"
-        print("作业号：", jobDataSubmit.job_total_id,
-              " 共有待处理的数据条目: ", len(singleJobDataItems))
-        return singleJobDataItems
+        print("作业号：", jobDataSubmit.job_total_id, " 共有待处理的数据条目: ", len(singleJobDataItems))
+
 
     def all(self):
         return dbService.query_all(JobDataSubmit)
