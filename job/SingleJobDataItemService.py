@@ -5,16 +5,18 @@
 # date: 2022/10/17 周一 14:38:21
 # description: 单条作业数据处理服务,该文件中用于存储到数据表中
 
+import sys
+from pathlib import Path
+from typing import List
+sys.path.append(str(Path(__file__).parent.parent))
+
 from db.db_service import dbService
 from db.dp_single_job_data_item_table import SingleJobDataItem
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from utils.config import Configuration
 from sqlalchemy.ext.declarative import declarative_base
-import sys
-from pathlib import Path
-from typing import List
-sys.path.append(str(Path(__file__).parent.parent))
+
 
 
 engine = create_engine(dbService.dbConfig()["file"], connect_args={
@@ -62,6 +64,16 @@ class SingleJobDataItemService:
         """查询系统中属于job_total_id的指定数量的作业数据条目"""
         with Session() as session:
             return session.query(SingleJobDataItem).limit(limit).all()
+    
+    def deleteBatch(self, ids: List[int]) -> int:
+        """
+        批量删除单条作业条目
+        返回删除的行数
+        """
+        with Session() as session:
+            session.query(SingleJobDataItem).filter(SingleJobDataItem.primary_id.in_(ids)).delete(synchronize_session=False)
+            session.commit()
+        return 
 
 
 singleJobDataItemService = SingleJobDataItemService()
@@ -94,9 +106,10 @@ def testDistinct():
     print(type(jobTotalIds[0]))
     print(jobTotalIds)
 
+def testDelete():
+    
+    singleJobDataItemService.deleteBatch([64, 65, 66, 67, 68])
+
 
 if __name__ == '__main__':
-    lang = ["Python", "C++", "Java", "PHP", "Ruby", "MATLAB"]
-    for i in range(len(lang) - 1):
-        lang.pop(i)
-    print(lang)
+    testDelete()
