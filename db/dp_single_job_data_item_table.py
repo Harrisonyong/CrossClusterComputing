@@ -19,7 +19,7 @@ class SingleJobDataItem(Base):
     __tablename__ = "dp_single_job_data_item_table"
     primary_id = Column(Integer, primary_key=True)  # 自增id号
     # 整体作业批号
-    job_total_id = Column(Integer, ForeignKey("dp_job_data_submit_table.job_total_id"), index=True)
+    job_total_id = Column(Integer, ForeignKey(JobDataSubmit.job_total_id), index=True)
     # 待处理的数据文件    
     data_file = Column(String)
     
