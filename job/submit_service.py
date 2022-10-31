@@ -7,13 +7,16 @@
 
 
 from datetime import datetime
+from random import Random
+import stat
 import time
 import os
 import threading
 from typing import List
-from db.db_service import DBService
+from db.db_service import dbService
 from db.dp_cluster_status_table import PartitionStatus
 from db.dp_job_data_submit_table import JobDataSubmit
+from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
 import job
 from job.SingleJobDataItemService import singleJobDataItemService
@@ -28,11 +31,12 @@ from job.SingleJobDataItemService import singleJobDataItemService
 from utils.log import Log
 from functools import partial
 from db.db_partition import dBPartionService
+from db.db_running_job import dbRunningJobService
 
 from utils.scheduler import Scheduler
 scheduler = Scheduler.AsyncScheduler()
 
-sbatch_file_path = "D:\\200-Git\\220-slurm\\CrossClusterComputing\\bash"+os.path.sep+"root"
+sbatch_file_path = "D:\\200-Git\\220-slurm\\bash"+os.path.sep+"root"
 
 
 def handleJobDataItem():
@@ -52,10 +56,10 @@ def handleJobDataItem():
 
 def schedule(runningSubmitRecords: List[JobDataSubmit], partions: List[PartitionStatus]):
     for record in runningSubmitRecords:
-        
+
         if not canSchdule(record, partions):
             print("该作业：%d, 作业名称: %s无法被此时的分区列表进行调度" %
-              (record.job_total_id, record.job_name))
+                  (record.job_total_id, record.job_name))
             continue
         print("该作业：%d, 作业名称: %s可以被此时的分区列表进行调度" %
               (record.job_total_id, record.job_name))
@@ -74,7 +78,8 @@ def schduleSubmitRecord(record: JobDataSubmit, partitions: List[PartitionStatus]
     while canSchdule(record, partitions):
         print("处理作业:%s, job_total_id: %d" %
               (record.job_name, record.job_total_id))
-        print(f"该作业仍有{singleJobDataItemService.countOfItems(record.job_total_id)}个作业条目未处理", )
+        print(
+            f"该作业仍有{singleJobDataItemService.countOfItems(record.job_total_id)}个作业条目未处理", )
         availIndex = findAvailablePartion(record, partitions)
         print(f"可用的索引为{availIndex}, 可用分区为: {partitions[availIndex]}")
         handle(record, partitions[availIndex])
@@ -96,19 +101,51 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
 
     print(f"in handle, partition: {partition}")
     maxNum = partition.numberCanSchdule(record)
-    jobDataitems = singleJobDataItemService.queryAccordingIdAndLimit(
+    jobDataItems = singleJobDataItemService.queryAccordingIdAndLimit(
         record.job_total_id, maxNum)
-    if len(jobDataitems) < maxNum:
+    if len(jobDataItems) < maxNum:
         print("job_total_id=%s作业已经处理完成, 当前时刻=%s" %
               (record.job_total_id, dateUtils.nowStr()))
 
-    slurmBatchFilePath = getSlurmBatchFile(record, partition, jobDataitems)
-    jobId = submitJob(slurmBatchFilePath, partition)
+    batchFileName = getSlurmBatchFileName(record)
+    resourceDescriptor = getResourceDescriptor(record, partition)
+    jobDescriptor = getJobDescriptor(record, jobDataItems)
+
+    genrateSlurmBatchFile(batchFileName, resourceDescriptor, jobDescriptor)
+    jobId, jobStatus = submitJob(batchFileName, partition)
+
     # 写入运行作业信息
+
+    dbRunningJobService.add(getRunningJob(
+        record, partition, jobDataItems, batchFileName, jobId, jobStatus))
+
     # 移除作业条目
+    ids = [item.primary_id for item in jobDataItems]
+    singleJobDataItemService.deleteBatch(ids)
+    print(f"删除了{len(jobDataItems)}个作业条目")
     # 触发分区状态修改
+    triggerPartitionChange(partition)
     print(
-        f"本次调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(jobDataitems)}个作业条目, 作业数据条目为: {[item.data_file for item in jobDataitems]}")
+        f"本次调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(jobDataItems)}个作业条目, 作业数据条目为: {[item.data_file for item in jobDataItems]}")
+
+
+def getRunningJob(record: JobDataSubmit, partition: PartitionStatus, jobDataItems: List[SingleJobDataItem], batchFileName: str, jobId: int, jobStatus: str):
+    """
+    根据投递数据、分区信息、脚本名称、作业id、作业状态生成
+    """
+    job = RunningJob()
+    job.cluster_name = partition.cluster_name
+    job.partition_name = partition.partition_name
+    job.file_list = f"{[item.data_file for item in jobDataItems]}"
+    job.job_id = jobId
+    job.state = jobStatus
+    job.sbatch_file_path = batchFileName
+    job.job_total_id = record.job_total_id
+    return job
+
+
+def triggerPartitionChange(partition: PartitionStatus):
+    print(f"分区状态更新完成")
 
 
 def submitJob(batchFile: str, partition: PartitionStatus):
@@ -116,7 +153,8 @@ def submitJob(batchFile: str, partition: PartitionStatus):
     batchFile: 批处理脚本绝对路径，在集群中路径是统一的一致的
     partion
     """
-    return 3445
+    random = Random()
+    return random.randint(1, 100000), "R"
 
 
 def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:
@@ -127,15 +165,11 @@ def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:
 def getSlurmBatchFile(record: JobDataSubmit, partition: PartitionStatus, jobDataitems: List[SingleJobDataItem]) -> str:
     "根据作业和分区以及待处理的作业条目信息生成批处理脚本"
 
+    batchFileName = getSlurmBatchFileName(record)
     resourceDescriptor = getResourceDescriptor(record, partition)
     jobDescriptor = getJobDescriptor(record, jobDataitems)
 
-    batchFileName = getSlurmBatchFileName(record)
-    print("batchFileName: ")
-    print(f"{batchFileName}")
-
-    genrateSlurmBatchFile(batchFileName,
-                          resourceDescriptor, jobDescriptor)
+    genrateSlurmBatchFile(batchFileName, resourceDescriptor, jobDescriptor)
     return batchFileName
 
 
@@ -154,7 +188,7 @@ def getJobDescriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataItem
     则运行过程为
     bash run.sh a1.txt, a2.txt, a3.txt
     """
-    exeStatements = "bash " + record.execute_file_path+ " "
+    exeStatements = "bash " + record.execute_file_path + " "
     for item in jobDataItems:
         exeStatements += item.data_file + " "
     return exeStatements
@@ -170,14 +204,22 @@ def getSlurmBatchCannoialFileName(record: JobDataSubmit):
     """
     根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
     """
+    return "%s-%s-%s.sh" % (record.job_name, record.job_total_id, dateUtils.jobNowStr())
+
+
+def getSlurmJobName(record: JobDataSubmit):
+    """
+    根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
+    """
     return "%s-%s-%s" % (record.job_name, record.job_total_id, dateUtils.jobNowStr())
 
 
-def genrateSlurmBatchFile(abosluteBatchFileName: str, resourceDescriptor: str, jobDescriptor: str):
-    """使用文件io操作创建slurm脚本文件"""
-    with open(abosluteBatchFileName, 'w') as batchFile:
+def genrateSlurmBatchFile(absoluteBatchFileName: str, resourceDescriptor: str, jobDescriptor: str):
+    """使用文件io操作创建slurm脚本文件,并添加可执行权限"""
+    with open(absoluteBatchFileName, 'w') as batchFile:
         batchFile.write(resourceDescriptor)
         batchFile.write(jobDescriptor)
+    os.chmod(absoluteBatchFileName, stat.S_IEXEC)
     return
 
 
@@ -208,12 +250,14 @@ class SubmitService:
         files_to_compute = os.listdir(jobDataSubmit.data_dir)
         singleJobDataItems = []
         for file in files_to_compute:
-            singleJobDataItems.append(SingleJobDataItem(
-                job_total_id=jobDataSubmit.job_total_id,
-                data_file=file))
+            item = SingleJobDataItem()
+            item.data_file = os.path.join(jobDataSubmit.data_dir, file)
+            item.job_total_id = jobDataSubmit.job_total_id
+            singleJobDataItems.append(item)
         assert len(singleJobDataItems) > 0, "数据目录下没有文件！"
         print("作业号：", jobDataSubmit.job_total_id,
               " 共有待处理的数据条目: ", len(singleJobDataItems))
+        return singleJobDataItems
 
     def all(self):
         return dbService.query_all(JobDataSubmit)
@@ -234,7 +278,7 @@ class SubmitService:
         )
         return dataSubmit
 
-    def transfer(self, job_total_id: int, singleJobDataItems: list):
+    def transfer(self, job_total_id: int, singleJobDataItems: list[SingleJobDataItem]):
         '''转换过程，该函数应该为事务，保持一致性。'''
         '''同时，当前未考虑异常情况，即线程崩溃，若要解决该问题，可以保存线程号'''
         print("异步开始, 处理线程为: ", threading.currentThread().getName(),
