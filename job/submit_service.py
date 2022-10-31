@@ -15,6 +15,7 @@ from db.db_service import DBService
 from db.dp_cluster_status_table import PartitionStatus
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_single_job_data_item_table import SingleJobDataItem
+import job
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.submit_state import SubmitState
 from utils.date_utils import dateUtils
@@ -31,7 +32,7 @@ from db.db_partition import dBPartionService
 from utils.scheduler import Scheduler
 scheduler = Scheduler.AsyncScheduler()
 
-sbatch_file_path = "/root"
+sbatch_file_path = "D:\\200-Git\\220-slurm\\CrossClusterComputing\\bash"+os.path.sep+"root"
 
 
 def handleJobDataItem():
@@ -51,11 +52,10 @@ def handleJobDataItem():
 
 def schedule(runningSubmitRecords: List[JobDataSubmit], partions: List[PartitionStatus]):
     for record in runningSubmitRecords:
-        print("处理作业:%s, job_total_id: %d" %
-              (record.job_name, record.job_total_id))
-        print("该作业仍有%d个作业条目未处理", singleJobDataItemService.countOfItems(
-            record.job_total_id))
+        
         if not canSchdule(record, partions):
+            print("该作业：%d, 作业名称: %s无法被此时的分区列表进行调度" %
+              (record.job_total_id, record.job_name))
             continue
         print("该作业：%d, 作业名称: %s可以被此时的分区列表进行调度" %
               (record.job_total_id, record.job_name))
@@ -72,6 +72,9 @@ def canSchdule(record: JobDataSubmit, partions: List[PartitionStatus]):
 def schduleSubmitRecord(record: JobDataSubmit, partitions: List[PartitionStatus]):
     "使用此组分区列表调度该作业投递记录"
     while canSchdule(record, partitions):
+        print("处理作业:%s, job_total_id: %d" %
+              (record.job_name, record.job_total_id))
+        print(f"该作业仍有{singleJobDataItemService.countOfItems(record.job_total_id)}个作业条目未处理", )
         availIndex = findAvailablePartion(record, partitions)
         print(f"可用的索引为{availIndex}, 可用分区为: {partitions[availIndex]}")
         handle(record, partitions[availIndex])
@@ -83,8 +86,9 @@ def findAvailablePartion(record: JobDataSubmit, partions: List[PartitionStatus])
     for index, partion in enumerate(partions):
         if partion.canSchdule(record):
             return index
-    
-    raise Exception("在findAvailablePartion中，partions: %s, 无法调度作业: %s" %(partions, record))
+
+    raise Exception(
+        "在findAvailablePartion中，partions: %s, 无法调度作业: %s" % (partions, record))
 
 
 def handle(record: JobDataSubmit, partition: PartitionStatus):
@@ -97,13 +101,14 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     if len(jobDataitems) < maxNum:
         print("job_total_id=%s作业已经处理完成, 当前时刻=%s" %
               (record.job_total_id, dateUtils.nowStr()))
-    
+
     slurmBatchFilePath = getSlurmBatchFile(record, partition, jobDataitems)
     jobId = submitJob(slurmBatchFilePath, partition)
     # 写入运行作业信息
     # 移除作业条目
     # 触发分区状态修改
-    print(f"本次调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(jobDataitems)}个作业条目, 作业数据条目为: {[item.data_file for item in jobDataitems]}")
+    print(
+        f"本次调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(jobDataitems)}个作业条目, 作业数据条目为: {[item.data_file for item in jobDataitems]}")
 
 
 def submitJob(batchFile: str, partition: PartitionStatus):
@@ -121,39 +126,58 @@ def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:
 
 def getSlurmBatchFile(record: JobDataSubmit, partition: PartitionStatus, jobDataitems: List[SingleJobDataItem]) -> str:
     "根据作业和分区以及待处理的作业条目信息生成批处理脚本"
-    print(f"in getSlurmBatchFile, partition: {partition}")
+
     resourceDescriptor = getResourceDescriptor(record, partition)
     jobDescriptor = getJobDescriptor(record, jobDataitems)
+
     batchFileName = getSlurmBatchFileName(record)
-    abosluteBatchFileName = sbatch_file_path+os.linesep+batchFileName
-    genrateSlurmBatchFile(abosluteBatchFileName,
+    print("batchFileName: ")
+    print(f"{batchFileName}")
+
+    genrateSlurmBatchFile(batchFileName,
                           resourceDescriptor, jobDescriptor)
-    return abosluteBatchFileName
+    return batchFileName
 
 
 def getResourceDescriptor(record: JobDataSubmit, partition: PartitionStatus) -> str:
     print(f"record: {record}, partition: {partition}")
     """获取资源描述信息"""
-    resourceStr = "#!/bin/bash" + os.linesep+"#SBATCH -J %s" % (getSlurmBatchFileName(record))+os.linesep+"#SBATCH -N %d" % (partition.nodes_avail)+os.linesep+"#SBATCH -p %s" % (partition.partition_name)+os.linesep
-    print(f"resourceStr : {resourceStr}")
-
+    resourceStr = "#!/bin/bash" + os.linesep+"#SBATCH -J %s" % (getSlurmBatchCannoialFileName(record))+os.linesep+"#SBATCH -N %d" % (
+        partition.nodes_avail)+os.linesep+"#SBATCH -p %s" % (partition.partition_name)+os.linesep
     return resourceStr
 
 
-def getJobDescriptor(record: JobDataSubmit, jobDataitems: List[SingleJobDataItem]) -> str:
-    exeStatements = "bash "+record.execute_file_path
-    for item in jobDataitems:
-        exeStatements + item.data_file + " "
+def getJobDescriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataItem]) -> str:
+    """
+    作业实际执行的命令语句，调用封装好的脚本文件
+    执行脚本为run.sh
+    则运行过程为
+    bash run.sh a1.txt, a2.txt, a3.txt
+    """
+    exeStatements = "bash " + record.execute_file_path+ " "
+    for item in jobDataItems:
+        exeStatements += item.data_file + " "
     return exeStatements
 
 
 def getSlurmBatchFileName(record: JobDataSubmit) -> str:
     """根据作业信息和根目录获取批处理作业文件名称"""
-    return "%s-%s-%s" % (record.job_name, record.job_total_id, dateUtils.nowStr())
+    canonicalName = getSlurmBatchCannoialFileName(record)
+    return sbatch_file_path + os.path.sep + canonicalName
+
+
+def getSlurmBatchCannoialFileName(record: JobDataSubmit):
+    """
+    根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
+    """
+    return "%s-%s-%s" % (record.job_name, record.job_total_id, dateUtils.jobNowStr())
 
 
 def genrateSlurmBatchFile(abosluteBatchFileName: str, resourceDescriptor: str, jobDescriptor: str):
     """使用文件io操作创建slurm脚本文件"""
+    with open(abosluteBatchFileName, 'w') as batchFile:
+        batchFile.write(resourceDescriptor)
+        batchFile.write(jobDescriptor)
     return
 
 
