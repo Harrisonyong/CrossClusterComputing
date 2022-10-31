@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 class SingleItemAllocation(BaseModel):
     '单个待处理条目所需要的资源'
-    node: int
+    node: float
     memory: int
     unit: str
 

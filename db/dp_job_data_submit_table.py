@@ -55,6 +55,4 @@ class JobDataSubmit(Base):
 
         
         resource = eval(self.single_item_allocation)
-        
-        assert resource["node"] > 0
         return resource["node"]
