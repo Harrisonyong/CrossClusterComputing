@@ -13,6 +13,10 @@ class DateUtils:
     def nowStr(self):
         now = datetime.now()
         return now.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def jobNowStr(self):
+        now = datetime.now()
+        return now.strftime('%Y-%m-%d-%H-%M-%S')
 
 dateUtils = DateUtils()
 
