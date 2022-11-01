@@ -158,12 +158,9 @@ def submitJob(batchFile: str, partition: PartitionStatus):
     cluster: ClusterStatus = partition.clusterstatus
     print(f"待提交的分区所在ip为{cluster.ip}" )
 
-    slurm = SlurmServer(host = cluster.ip, port = cluster.port, user = cluster.user, password = cluster.password)
+    slurm = SlurmServer.fromPartition(partition)
     slurm.sbatch("/root/task.sh")
     slurm.close()
-    slurm = SlurmServer(host = cluster.ip, port = cluster.port, user = cluster.user, password = cluster.password)
-    slurm.sinfo()
-    slurm.exec("df -h")
     random = Random()
     return random.randint(1, 100000), "R"
 
