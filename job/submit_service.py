@@ -8,19 +8,21 @@
 
 from datetime import datetime
 from random import Random
+
 import stat
 import time
 import os
 import threading
 from typing import List
 from db.db_service import dbService
-from db.dp_cluster_status_table import PartitionStatus
+from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
 import job
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.submit_state import SubmitState
+from slurm_monitor.serverconn import Connector, SlurmServer
 from utils.date_utils import dateUtils
 # from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 
@@ -153,12 +155,22 @@ def submitJob(batchFile: str, partition: PartitionStatus):
     batchFile: 批处理脚本绝对路径，在集群中路径是统一的一致的
     partion
     """
+    cluster: ClusterStatus = partition.clusterstatus
+    print(f"待提交的分区所在ip为{cluster.ip}" )
+
+    slurm = SlurmServer(host = cluster.ip, port = cluster.port, user = cluster.user, password = cluster.password)
+    slurm.sbatch("/root/task.sh")
+    slurm.close()
+    slurm = SlurmServer(host = cluster.ip, port = cluster.port, user = cluster.user, password = cluster.password)
+    slurm.sinfo()
+    slurm.exec("df -h")
     random = Random()
     return random.randint(1, 100000), "R"
 
 
 def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:
     """"获取此分区能够处理的record最大能力: 即同时处理record的作业条目数量"""
+    
     return 40
 
 
