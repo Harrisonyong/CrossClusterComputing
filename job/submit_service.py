@@ -23,6 +23,7 @@ import job
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.submit_state import SubmitState
 from slurm_monitor.serverconn import Connector, SlurmServer
+from slurm_monitor.monitor import slurm_search
 from utils.date_utils import dateUtils
 # from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 
@@ -147,6 +148,12 @@ def getRunningJob(record: JobDataSubmit, partition: PartitionStatus, jobDataItem
 
 
 def triggerPartitionChange(partition: PartitionStatus):
+    cluster: ClusterStatus = partition.clusterstatus
+    host = cluster.ip
+    port = cluster.port
+    user = cluster.user
+    password = cluster.password
+    slurm_search(name=partition.cluster_name, host = host, port = port, user = user, password = password)
     print(f"分区状态更新完成")
 
 

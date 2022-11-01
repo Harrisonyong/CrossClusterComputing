@@ -40,9 +40,11 @@ def get_db():
     finally:
         db.close()
 
-def slurm_search(name, host, port, user, password):
-    slurm = SlurmServer(host=host, port=port, user=user, password=password)
-    std_out, std_err = slurm.sinfo()
+def partition_parse(std_out):
+    """解析slurm输出的分区信息
+    param: std_out :集群分区信息的查询结果
+    result: partition_dict:集群中分区和节点对应关系
+    """
     partition_dict = defaultdict(dict)
     next(std_out)
     for line in std_out:
@@ -56,13 +58,18 @@ def slurm_search(name, host, port, user, password):
         if state == "idle":
             partition_dict[partition_name]["state"] = state
             partition_dict[partition_name]["avail_nodes"] += int(nodes)
-    if std_err: log.error(std_err.read().decode("utf8"))
-    slurm.close()
+    return partition_dict
+
+def slurm_search(name, host, port, user, password):
+    with SlurmServer(host=host, port=port, user=user, password=password) as slurm:
+        std_out, std_err = slurm.sinfo()
+        partition_dict = partition_parse(std_out=std_out)
+        if std_err: log.error(std_err.read().decode("utf8"))
+
     with database.Session() as db:
         for partition_name, info in partition_dict.items():
             partition = schema.PartitionCreate(cluster_name = name, partition_name = partition_name, nodes = info.get("nodes"), nodes_avail = info.get("avail_nodes"), avail = info.get("avail"), state=info.get("state"))
             log.info(create_partition(partition=partition, db=db))
-
 
 def add_slurm_monitor_job(seconds):
     with database.Session() as db:
