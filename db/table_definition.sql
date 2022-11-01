@@ -2,7 +2,7 @@
 CREATE TABLE dp_job_data_submit_table (
     primary_id             INTEGER  PRIMARY KEY AUTOINCREMENT,
     user_name              STRING,
-    job_total_id           BIGINT   UNIQUE
+    job_total_id           INTEGER  UNIQUE
                                     NOT NULL,
     job_name               STRING   NOT NULL,
     data_dir               STRING   NOT NULL,
@@ -16,10 +16,11 @@ CREATE TABLE dp_job_data_submit_table (
 );
 
 
+
 # 单条作业数据， 其中job_total_id为外键，关联dp_job_data_submit_table中job_total_id
 CREATE TABLE dp_single_job_data_item_table (
     primary_id   INTEGER PRIMARY KEY AUTOINCREMENT,
-    job_total_id         REFERENCES dp_job_data_submit_table (job_total_id) 
+    job_total_id INTEGER REFERENCES dp_job_data_submit_table (job_total_id) 
                          NOT NULL,
     data_file    STRING
 );
@@ -57,3 +58,18 @@ CREATE TABLE dp_partition_table (
     )
     REFERENCES dp_cluster_status_table (cluster_name) 
 );
+
+# 运行作业表
+CREATE TABLE dp_running_job_table (
+    primary_id       INTEGER  PRIMARY KEY AUTOINCREMENT,
+    job_total_id     INTEGER,
+    partition_name   STRING,
+    cluster_name     STRING,
+    job_id           INTEGER  NOT NULL,
+    state            STRING   NOT NULL,
+    sbatch_file_path STRING   NOT NULL,
+    file_list        STRING   NOT NULL,
+    update_time      DATETIME,
+    create_time      DATETIME
+);
+
