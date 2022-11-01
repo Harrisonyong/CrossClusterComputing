@@ -49,8 +49,6 @@ class SlurmServer(Connector):
     def exec(self, command):
         _, std_out, std_err \
             = self.sshClient.exec_command(self.slurm_envir+command)
-        for line in std_out:
-            print 
         return std_out, std_err
 
     def sinfo(self):
@@ -58,9 +56,7 @@ class SlurmServer(Connector):
 
     def sbatch(self, sbatch_path):
         """使用slurm创建批处理作业"""
-        std_out, std_err =  self.exec("sbatch "+ sbatch_path) 
-        return std_out, std_err
-        
+        return self.exec("sbatch "+ sbatch_path)    
 
 
     def close(self):    
