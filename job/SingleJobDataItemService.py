@@ -5,16 +5,18 @@
 # date: 2022/10/17 周一 14:38:21
 # description: 单条作业数据处理服务,该文件中用于存储到数据表中
 
-from sqlalchemy.ext.declarative import declarative_base
-from utils.config import Configuration
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, func
-from db.dp_single_job_data_item_table import SingleJobDataItem
-from db.db_service import dbService
 import sys
 from pathlib import Path
 from typing import List
 sys.path.append(str(Path(__file__).parent.parent))
+
+from db.db_service import dbService
+from db.dp_single_job_data_item_table import SingleJobDataItem
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker
+from utils.config import Configuration
+from sqlalchemy.ext.declarative import declarative_base
+
 
 
 engine = create_engine(dbService.dbConfig()["file"], connect_args={
@@ -43,19 +45,35 @@ class SingleJobDataItemService:
 
     def groupByJobTotalId(self):
         """返回分组，0号位为job_total_id, 1号位为待处理的数据文件数量"""
-        session = Session()
-        result = session.query(SingleJobDataItem.job_total_id, func.count(
-            SingleJobDataItem.primary_id)).group_by(SingleJobDataItem.job_total_id).all()
-        session.close()
-        return result
+        with Session() as session:
+            return session.query(SingleJobDataItem.job_total_id, func.count(
+                SingleJobDataItem.primary_id)).group_by(SingleJobDataItem.job_total_id).all()
 
     def allJobTotalId(self) -> List[int]:
         '''使用列表推导式计算出所有的整体作业号'''
-        session = Session()
-        result = session.query(SingleJobDataItem.job_total_id).distinct(
-            SingleJobDataItem.job_total_id).all()
-        session.close
-        return [item[0] for item in result]
+        with Session() as session:
+            result = session.query(SingleJobDataItem.job_total_id).distinct(
+                SingleJobDataItem.job_total_id).all()
+            return [item[0] for item in result]
+
+    def countOfItems(self, job_total_id: int):
+        """指定作业号的条数"""
+        return 100
+
+    def queryAccordingIdAndLimit(self, job_total_id: int, limit: int) -> List[SingleJobDataItem]:
+        """查询系统中属于job_total_id的指定数量的作业数据条目"""
+        with Session() as session:
+            return session.query(SingleJobDataItem).limit(limit).all()
+    
+    def deleteBatch(self, ids: List[int]) -> int:
+        """
+        批量删除单条作业条目
+        返回删除的行数
+        """
+        with Session() as session:
+            session.query(SingleJobDataItem).filter(SingleJobDataItem.primary_id.in_(ids)).delete(synchronize_session=False)
+            session.commit()
+        return 
 
 
 singleJobDataItemService = SingleJobDataItemService()
@@ -88,6 +106,10 @@ def testDistinct():
     print(type(jobTotalIds[0]))
     print(jobTotalIds)
 
+def testDelete():
+    
+    singleJobDataItemService.deleteBatch([64, 65, 66, 67, 68])
+
 
 if __name__ == '__main__':
-    testGroup()
+    testDelete()

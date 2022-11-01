@@ -54,13 +54,13 @@ class DBPartionService:
             .offset(skip).limit(limit).all()
 
 
-    def get_available_partitions(self, skip: int = 0, limit: int = 100) -> List[PartitionStatus]:
+    def get_available_partitions(self, skip: int = 0, limit: int = 1000) -> List[PartitionStatus]:
         """
-        获取可用的的分区信息, 此时会直接调用获取分区的集群信息
+        获取可用的的分区信息, 此时会直接调用获取分区的集群信息, 并基于可用节点进行排序
         :param db: 数据库会话
         :param skip: 开始位置
         :param limit: 限制数量
-        :return:集群信息列表
+        :return:分区信息列表
         """
         with Session() as session:
             return session.query(PartitionStatus) \

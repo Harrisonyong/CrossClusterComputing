@@ -76,7 +76,7 @@ class DBJobSubmitService:
         param: job_total_ids 作业投递记录的整体作业号列表
         """
         with Session() as session:
-            return session.query(JobDataSubmit).filter(JobDataSubmit.job_total_id.in_(job_total_ids)).order_by(JobDataSubmit.create_time)
+            return session.query(JobDataSubmit).filter(JobDataSubmit.job_total_id.in_(job_total_ids)).order_by(JobDataSubmit.create_time).all()
 
 dBJobSubmitService = DBJobSubmitService()
 
