@@ -61,3 +61,13 @@ class SlurmServer(Connector):
 
     def close(self):    
         self.sshClient.close()
+
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exceptionType, exceptionVal, trace):
+        if trace:
+            print(exceptionType)
+            print(exceptionVal)
+            print(trace)
+        self.close()

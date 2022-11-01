@@ -155,16 +155,16 @@ def submitJob(batchFile: str, partition: PartitionStatus):
     batchFile: 批处理脚本绝对路径，在集群中路径是统一的一致的
     partion: 作业提交的分区
     """
-    slurm = SlurmServer.fromPartition(partition)
-    stdout, stderr = slurm.sbatch("/root/task.sh")
-    result = stdout.read().decode("utf-8")
-    if "Submitted batch" not in result:
-        raise Exception(f"任务调度失败，slurm脚本为: ${batchFile}, 集群为{partition.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
+    with SlurmServer.fromPartition(partition) as slurm:
+        stdout, stderr = slurm.sbatch("/root/task.sh")
+        result = stdout.read().decode("utf-8")
+        if "Submitted batch" not in result:
+            raise Exception(f"任务调度失败，slurm脚本为: ${batchFile}, 集群为{partition.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
     
-    # Submitted batch job 1151
-    jobId = int(result.strip("\n").split()[3])
+        # Submitted batch job 1151
+        jobId = int(result.strip("\n").split()[3])
+
     print(f"调度之后生成作业id为{jobId}")
-    slurm.close()
     return jobId, "R"
 
 
