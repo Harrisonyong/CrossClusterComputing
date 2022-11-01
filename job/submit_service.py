@@ -153,23 +153,18 @@ def triggerPartitionChange(partition: PartitionStatus):
 def submitJob(batchFile: str, partition: PartitionStatus):
     """根据分区信息，使用paramico框架来提交作业
     batchFile: 批处理脚本绝对路径，在集群中路径是统一的一致的
-    partion
+    partion: 作业提交的分区
     """
-    cluster: ClusterStatus = partition.clusterstatus
-    print(f"待提交的分区所在ip为{cluster.ip}" )
-
-    slurm = SlurmServer(host = cluster.ip, port = cluster.port, user = cluster.user, password = cluster.password)
+    slurm = SlurmServer.fromPartition(partition)
     stdout, stderr = slurm.sbatch("/root/task.sh")
     result = stdout.read().decode("utf-8")
-    print(f"result = {result}")
     if "Submitted batch" not in result:
-        raise Exception(f"任务调度失败，slurm脚本为: ${batchFile}, 集群为{cluster.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
+        raise Exception(f"任务调度失败，slurm脚本为: ${batchFile}, 集群为{partition.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
     
     # Submitted batch job 1151
     jobId = int(result.strip("\n").split()[3])
     print(f"调度之后生成作业id为{jobId}")
     slurm.close()
-    
     return jobId, "R"
 
 
