@@ -7,7 +7,6 @@
 @Author :yangqinglin
 @email :yangqinglin@zhejianglab.com
 '''
-from cmath import inf
 import paramiko
 
 
@@ -36,5 +35,5 @@ class SlurmServer(Connector):
             = self.sshClient.exec_command(command)
         return std_out, std_err
 
-    def close(self):    
+    def close(self):
         self.sshClient.close()

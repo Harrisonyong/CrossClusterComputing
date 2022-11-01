@@ -48,7 +48,7 @@ async def root():
 async def scan():
     '''添加了定时任务数据条目扫描程序'''
     add_slurm_monitor_job(5)
-    # add_job_data_item_scan_job(10)
+    add_job_data_item_scan_job(10)
     scheduler.start()
 
 @app.get("/stop")

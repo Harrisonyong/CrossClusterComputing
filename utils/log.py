@@ -17,7 +17,7 @@ __all__ = ["Log"]
 
 LOGDIR = Path(__file__).parent.parent/"log"
 
-
+logger.remove(handler_id=None)
 class Log:
 
     @staticmethod
@@ -52,9 +52,7 @@ class Log:
         return logger
 
     @classmethod
-    def ulog(cls, logfile="job.log", console=False):
-        if not console:
-            logger.remove(handler_id=None)
+    def ulog(cls, logfile="job.log"):
         format = "{time:YYYY-MM-DD HH:mm:ss} {level} From File_{file} Function_{function} Line_{line} : {message}"
         logger.add(f"{cls.__get_file__(logfile)}", rotation="200MB", encoding="utf-8", enqueue=True,
                    retention="30 days", format=format, compression='zip', level="INFO", filter=lambda record: record["extra"]["name"] == logfile)

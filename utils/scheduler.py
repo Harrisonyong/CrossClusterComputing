@@ -46,12 +46,12 @@ class _AsyncSchduler():
     def job_listener(Event, logger, scheduler):
         job = scheduler.get_job(Event.job_id)
         if not Event.exception:
-            print('任务正常运行！')
+            print(f'{Event.job_id}:任务正常运行！')
             logger.info(
                 f"jobname={job.name};jobid={Event.job_id}|jobtrigger={job.trigger}|jobtime={Event.scheduled_run_time}|retval={Event.retval}")
 
         else:
-            print("任务出错了！！！！！")
+            print(f"{Event.job_id}:任务出错了！！！！！")
             logger.error(
                 "jobname={job.name}|jobtrigger={job.trigger}|errcode={Event.code}|exception=[{Event.exception}]|traceback=[{Event.traceback}]|scheduled_time={Event.scheduled_run_time}")
 

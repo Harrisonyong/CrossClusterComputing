@@ -7,14 +7,16 @@
 @Author :yangqinglin
 @email :yangqinglin@zhejianglab.com
 '''
+
 import sys
 from pathlib import Path
-from typing import List
-from unicodedata import name
 sys.path.append(str(Path(__file__).parent.parent))
+from collections import defaultdict
+from typing import List
 from utils.log import Log
 from utils.scheduler import Scheduler
 from utils.config import Configuration as config
+from utils.response import Response
 from fastapi import APIRouter, Depends, HTTPException
 from slurm_monitor.serverconn import SlurmServer
 from sqlalchemy.orm import Session
@@ -24,14 +26,13 @@ from db import crud, schema
 
 models.Base.metadata.create_all(bind=database.engine)
 
+log = Log.ulog("monitor.log")
 router = APIRouter(
     prefix="/monitor",
     tags=["monitor"],
     responses={404: {"description": "Not Found any slurm server"}}
 )
-logger = Log.ulog("monitor.log")
 scheduler = Scheduler.AsyncScheduler()
-
 def get_db():
     db = database.Session()
     try:
@@ -43,14 +44,26 @@ def slurm_search(name, host, port, user, password):
     command = "export PATH=/usr/local/slurm-21.08.8/bin; sinfo"
     slurm = SlurmServer(host=host, port=port, user=user, password=password)
     std_out, std_err = slurm.exec(command=command)
+    partition_dict = defaultdict(dict)
+    next(std_out)
     for line in std_out:
-        if "idle" and "up" in line:
-            info = line.strip("\n").split()
-            avail_partition, avail_nodes = info[0], info[3]
-            print(
-                f"{host}: avail_partition:{avail_partition}-avail_nodes:{avail_nodes}")
-    print(std_err.read().decode("utf8"))
+        info = line.strip("\n").split()
+        partition_name, avail, nodes, state = info[0], info[1], info[3], info[4]
+        partition_dict[partition_name].setdefault("state", "alloc")
+        partition_dict[partition_name].setdefault("avail_nodes", 0)
+        partition_dict[partition_name].setdefault("nodes", 0)
+        partition_dict[partition_name]["avail"] = avail
+        partition_dict[partition_name]["nodes"] += int(nodes)
+        if state == "idle":
+            partition_dict[partition_name]["state"] = state
+            partition_dict[partition_name]["avail_nodes"] += int(nodes)
+    if std_err: log.error(std_err.read().decode("utf8"))
     slurm.close()
+    with database.Session() as db:
+        for partition_name, info in partition_dict.items():
+            partition = schema.PartitionCreate(cluster_name = name, partition_name = partition_name, nodes = info.get("nodes"), nodes_avail = info.get("avail_nodes"), avail = info.get("avail"), state=info.get("state"))
+            log.info(create_partition(partition=partition, db=db))
+
 
 def add_slurm_monitor_job(seconds):
     with database.Session() as db:
@@ -59,13 +72,12 @@ def add_slurm_monitor_job(seconds):
             cluster = schema.ClusterCreate(cluster_name=name, ip=host, port=port, user=user, password=password,state="avail")
             db_cluster = crud.get_cluster_by_name(db, cluster_name=name)
             if db_cluster:
-                print(f'{name} is exists')
+                print(f'db-{name} is exists')
             else:
                 crud.create_cluster(db, cluster=cluster)
             scheduler.add_job(slurm_search, args=[
                             name,host, port, user, password], id=f"{name}", trigger="interval", seconds=seconds, replace_existing=True)
             print(f"定时监控任务{name}启动")
-
 
 @router.post("/cluster/", response_model=schema.Cluster)
 def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
@@ -89,17 +101,16 @@ def read_cluster(ip:str, db:Session=Depends(get_db)):
 @router.post("/partition/")
 def create_partition(partition:schema.PartitionCreate, db:Session = Depends(get_db)):
     result = crud.update_partition(db=db, cluster_name=partition.cluster_name, partition_name=partition.partition_name, nodes=partition.nodes, nodes_avail=partition.nodes_avail, avail=partition.avail, state=partition.state)
-    if result: return {202: "update success"}
+    if result:
+        return Response.success(msg="update success", data=dict(partition))
     else:
         crud.create_partition(db=db, partition=partition)
-        return {201: "create success"}
-
+        return Response.success(msg="create success")
 
 @router.get("/partitions/", response_model=List[schema.Partition])
 def get_partitions(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
     partitions = crud.get_partitions(db, skip=skip, limit=limit)
     return partitions
-
 
 @router.put("/part/{cluster_name}/{partition_name}/", response_model=schema.Partition)
 def relate_cluster_partition(cluster_name: str, partition_name: str, db:Session = Depends(get_db)):
