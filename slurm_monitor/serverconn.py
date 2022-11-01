@@ -13,18 +13,13 @@ from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
 class Connector:
     def __init__(self, host=None, port=None,
                  user=None, password=None):
-        print("Enter Connector.__init__")
         self.host = host
         self.port = port
         self.user = user
         self.password = password
-        print(f"self.host= {self.host}, self.port = {self.port}, self.user={self.user}, self.password={self.password}")
         self.sshClient = paramiko.SSHClient()
         self.sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         self.sshClient.connect(host, port, user, password)
-
-
-
 
 class SlurmServer(Connector):
     """
@@ -58,6 +53,9 @@ class SlurmServer(Connector):
         """使用slurm创建批处理作业"""
         return self.exec("sbatch "+ sbatch_path)
 
+    def sacct(self, jobId: int):
+        "使用sacct命令查询作业的最新状态"
+        return self.exec("sacct -j " + str(jobId))
 
     def close(self):
         self.sshClient.close()
