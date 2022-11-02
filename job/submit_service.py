@@ -39,11 +39,11 @@ from db.db_running_job import dbRunningJobService
 from utils.scheduler import Scheduler
 scheduler = Scheduler.AsyncScheduler()
 
-sbatch_file_path = "D:\\MSA\\"+os.path.sep+"root"
+sbatch_file_path = "D:\\200-Git\\220-slurm\\bash"+os.path.sep+"root"
 
 
 def handleJobDataItem():
-    '''执行定期扫描程序，处理所有的作业数据条目'''
+    """执行定期扫描程序，处理所有的作业数据条目"""
     groups = singleJobDataItemService.groupByJobTotalId()
     job_total_ids = [group[0] for group in groups]
     print("时刻{tm}共有{size}类,内容{con}的作业数据条目待处理".format(size=len(groups), con=[group[0] for group in groups], tm=time.strftime('%Y:%m:%d %H:%M:%S',
@@ -72,7 +72,7 @@ def schedule(runningSubmitRecords: List[JobDataSubmit], partions: List[Partition
 def canSchdule(record: JobDataSubmit, partions: List[PartitionStatus]):
     """判断该类型的作业是否可以被当前可用的分区列表进行调度"""
     for partion in partions:
-        return partion.canSchdule(record)
+        return partion.can_schedule(record)
     return False
 
 
@@ -92,7 +92,7 @@ def schduleSubmitRecord(record: JobDataSubmit, partitions: List[PartitionStatus]
 def findAvailablePartion(record: JobDataSubmit, partions: List[PartitionStatus]) -> int:
     """找到能够用于处理该作业条目的某个分区，返回可用的分区序号"""
     for index, partion in enumerate(partions):
-        if partion.canSchdule(record):
+        if partion.can_schedule(record):
             return index
 
     raise Exception(
@@ -103,7 +103,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     "使用分区partition来处理record类型的作业条目"
 
     print(f"in handle, partition: {partition}")
-    maxNum = partition.numberCanSchdule(record)
+    maxNum = partition.number_can_schedule(record)
     jobDataItems = singleJobDataItemService.queryAccordingIdAndLimit(
         record.job_total_id, maxNum)
     if len(jobDataItems) < maxNum:
