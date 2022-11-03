@@ -243,14 +243,6 @@ def genrateSlurmBatchFile(absoluteBatchFileName: str, resourceDescriptor: str, j
     return
 
 
-def add_job_data_item_scan_job(interval: int):
-    '''添加定时单条数据扫描程序'''
-    print("Enter add_job_data_item_scan_job")
-    scheduler.add_job(handleJobDataItem, args=[], id=f"single-thread",
-                      trigger="interval", seconds=interval, replace_existing=True)
-    print("定时扫描任务监控任务启动")
-
-
 class SubmitService:
     '作业数据投递服务，接收页面调用，把合法的请求转化为记录进行存储'
 

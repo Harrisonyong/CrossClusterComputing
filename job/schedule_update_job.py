@@ -15,11 +15,8 @@ from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.SingleJobDataItemService import singleJobDataItemService
 from slurm_monitor.serverconn import SlurmServer
-from utils.log import Log
-from utils.scheduler import Scheduler
 from utils.date_utils import dateUtils
-
-scheduler = Scheduler.AsyncScheduler()
+from utils.log import Log
 
 log = Log.ulog("schedule_update_job.log")
 
@@ -106,8 +103,4 @@ def handle_clusters(clusters: List[str]):
         handle(cluster)
 
 
-def add_schedule_update_job(interval: int):
-    """添加定时单条数据扫描程序"""
-    print("Enter add_schedule_update_job")
-    scheduler.add_job(schedule_update_job, args=[], id=f"schedule_update_job_thread",
-                      trigger="interval", seconds=interval, replace_existing=True)
+
