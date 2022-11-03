@@ -50,6 +50,7 @@ def partition_parse(std_out):
     for line in std_out:
         info = line.strip("\n").split()
         partition_name, avail, nodes, state = info[0], info[1], info[3], info[4]
+        partition_name = "".join(filter(str.isalnum, partition_name))
         partition_dict[partition_name].setdefault("state", "alloc")
         partition_dict[partition_name].setdefault("avail_nodes", 0)
         partition_dict[partition_name].setdefault("nodes", 0)
@@ -121,5 +122,8 @@ def get_partitions(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
 
 @router.put("/part/{cluster_name}/{partition_name}/", response_model=schema.Partition)
 def relate_cluster_partition(cluster_name: str, partition_name: str, db:Session = Depends(get_db)):
-    partition = crud.get_partition_by_cluster_partition(db=db, cluster_name=cluster_name, partition_name=partition_name)
+    try:
+        partition = crud.get_partition_by_cluster_partition(db=db, cluster_name=cluster_name, partition_name=partition_name)
+    except:
+        return Response.error(code=404, msg="partition is not found")
     return partition
