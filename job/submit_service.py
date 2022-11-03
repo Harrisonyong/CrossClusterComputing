@@ -21,6 +21,7 @@ from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
 import job
 from job.SingleJobDataItemService import singleJobDataItemService
+from job.slurm_job_state import SlurmJobState
 from job.submit_state import SubmitState
 from slurm_monitor.serverconn import Connector, SlurmServer
 from slurm_monitor.monitor import slurm_search
@@ -33,24 +34,24 @@ from job.db_job_submit import dBJobSubmitService
 from job.SingleJobDataItemService import singleJobDataItemService
 from utils.log import Log
 from functools import partial
-from db.db_partition import dBPartionService
+from db.db_partition import dBPartitionService
 from db.db_running_job import dbRunningJobService
 
 from utils.scheduler import Scheduler
 scheduler = Scheduler.AsyncScheduler()
 
-sbatch_file_path = "D:\\MSA\\"+os.path.sep+"root"
+sbatch_file_path = "D:\\200-Git\\220-slurm\\bash"+os.path.sep+"root"
 
 
 def handleJobDataItem():
-    '''执行定期扫描程序，处理所有的作业数据条目'''
+    """执行定期扫描程序，处理所有的作业数据条目"""
     groups = singleJobDataItemService.groupByJobTotalId()
     job_total_ids = [group[0] for group in groups]
     print("时刻{tm}共有{size}类,内容{con}的作业数据条目待处理".format(size=len(groups), con=[group[0] for group in groups], tm=time.strftime('%Y:%m:%d %H:%M:%S',
           time.localtime(int(time.time())))))
     # 待处理的作业条目信息, 此时可以通过策略的不同
     runningRecords = dBJobSubmitService.getSubmitRecords(job_total_ids)
-    partions = dBPartionService.get_available_partitions()
+    partions = dBPartitionService.get_available_partitions()
     if len(runningRecords) > 0 and len(partions) > 0:
         print("共有待处理作业类型: %d个, 可用分区为: %d" %
               (len(runningRecords), len(partions)))
@@ -72,7 +73,7 @@ def schedule(runningSubmitRecords: List[JobDataSubmit], partions: List[Partition
 def canSchdule(record: JobDataSubmit, partions: List[PartitionStatus]):
     """判断该类型的作业是否可以被当前可用的分区列表进行调度"""
     for partion in partions:
-        return partion.canSchdule(record)
+        return partion.can_schedule(record)
     return False
 
 
@@ -92,7 +93,7 @@ def schduleSubmitRecord(record: JobDataSubmit, partitions: List[PartitionStatus]
 def findAvailablePartion(record: JobDataSubmit, partions: List[PartitionStatus]) -> int:
     """找到能够用于处理该作业条目的某个分区，返回可用的分区序号"""
     for index, partion in enumerate(partions):
-        if partion.canSchdule(record):
+        if partion.can_schedule(record):
             return index
 
     raise Exception(
@@ -103,7 +104,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     "使用分区partition来处理record类型的作业条目"
 
     print(f"in handle, partition: {partition}")
-    maxNum = partition.numberCanSchdule(record)
+    maxNum = partition.number_can_schedule(record)
     jobDataItems = singleJobDataItemService.queryAccordingIdAndLimit(
         record.job_total_id, maxNum)
     if len(jobDataItems) < maxNum:
@@ -172,7 +173,7 @@ def submitJob(batchFile: str, partition: PartitionStatus):
         jobId = int(result.strip("\n").split()[3])
 
     print(f"调度之后生成作业id为{jobId}")
-    return jobId, "R"
+    return jobId, SlurmJobState.RUNNING.value
 
 
 def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:
@@ -242,14 +243,6 @@ def genrateSlurmBatchFile(absoluteBatchFileName: str, resourceDescriptor: str, j
     return
 
 
-def add_job_data_item_scan_job(interval: int):
-    '''添加定时单条数据扫描程序'''
-    print("Enter add_job_data_item_scan_job")
-    scheduler.add_job(handleJobDataItem, args=[], id=f"single-thread",
-                      trigger="interval", seconds=interval, replace_existing=True)
-    print("定时扫描任务监控任务启动")
-
-
 class SubmitService:
     '作业数据投递服务，接收页面调用，把合法的请求转化为记录进行存储'
 
@@ -268,13 +261,12 @@ class SubmitService:
     def getSingleJobDataItems(self, jobDataSubmit: JobDataSubmit):
         files_to_compute = os.listdir(jobDataSubmit.data_dir)
         singleJobDataItems = []
+        job_total_id = jobDataSubmit.job_total_id
         for file in files_to_compute:
-            item = SingleJobDataItem()
-            item.data_file = os.path.join(jobDataSubmit.data_dir, file)
-            item.job_total_id = jobDataSubmit.job_total_id
-            singleJobDataItems.append(item)
+            data_file = os.path.join(jobDataSubmit.data_dir, file)
+            singleJobDataItems.append(SingleJobDataItem(job_total_id, data_file))
         assert len(singleJobDataItems) > 0, "数据目录下没有文件！"
-        print("作业号：", jobDataSubmit.job_total_id,
+        print("作业号：", job_total_id,
               " 共有待处理的数据条目: ", len(singleJobDataItems))
         return singleJobDataItems
 

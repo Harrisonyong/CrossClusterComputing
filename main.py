@@ -8,16 +8,17 @@
 @email :yangqinglin@zhejianglab.com
 '''
 
-from slurm_monitor import monitor
-from db import dbcontroller
-from job import job_controller
-import uvicorn
-from fastapi import FastAPI
 import sys
 from pathlib import Path
+
+import uvicorn
+from fastapi import FastAPI
+
+from db import dbcontroller
+from job import job_controller
+from slurm_monitor import monitor
+from utils.schedule_service import add_schedule_service
 from utils.scheduler import Scheduler
-from job.submit_service import add_job_data_item_scan_job
-from slurm_monitor.monitor import add_slurm_monitor_job
 
 file = Path(__file__)
 sys.path.append(str(file.parent.parent))
@@ -38,7 +39,6 @@ app.include_router(monitor.router)
 app.include_router(dbcontroller.router)
 app.include_router(job_controller.router)
 
-# monitor.register_scheduler(app=app)
 
 @app.get("/")
 async def root():
@@ -47,8 +47,7 @@ async def root():
 @app.on_event("startup")
 async def scan():
     '''添加了定时任务数据条目扫描程序'''
-    add_slurm_monitor_job(5)
-    add_job_data_item_scan_job(5)
+    add_schedule_service()
     scheduler.start()
 
 @app.get("/stop")
