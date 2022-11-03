@@ -32,7 +32,8 @@ class DBRunningJobService:
             session.add(runningJob)
             session.commit()
 
-    def addBatch(self, runningJobs: List[RunningJob]):
+    @staticmethod
+    def addBatch(runningJobs: List[RunningJob]):
         '添加一组运行作业记录到数据库中'
         assert len(runningJobs) > 0, "确保存在插入数据库的作业数据条目"
         dbService.addBatchItem(runningJobs)
@@ -63,7 +64,7 @@ class DBRunningJobService:
                 .all()
 
     @staticmethod
-    def query_jobs_needs_reschedule(cluster_name: str):
+    def query_jobs_needs_reschedule(cluster_name: str) -> List[RunningJob]:
         with Session() as session:
             return session.query(RunningJob) \
                 .filter(
