@@ -269,13 +269,12 @@ class SubmitService:
     def getSingleJobDataItems(self, jobDataSubmit: JobDataSubmit):
         files_to_compute = os.listdir(jobDataSubmit.data_dir)
         singleJobDataItems = []
+        job_total_id = jobDataSubmit.job_total_id
         for file in files_to_compute:
-            item = SingleJobDataItem()
-            item.data_file = os.path.join(jobDataSubmit.data_dir, file)
-            item.job_total_id = jobDataSubmit.job_total_id
-            singleJobDataItems.append(item)
+            data_file = os.path.join(jobDataSubmit.data_dir, file)
+            singleJobDataItems.append(SingleJobDataItem(job_total_id, data_file))
         assert len(singleJobDataItems) > 0, "数据目录下没有文件！"
-        print("作业号：", jobDataSubmit.job_total_id,
+        print("作业号：", job_total_id,
               " 共有待处理的数据条目: ", len(singleJobDataItems))
         return singleJobDataItems
 
