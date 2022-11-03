@@ -21,6 +21,7 @@ from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
 import job
 from job.SingleJobDataItemService import singleJobDataItemService
+from job.slurm_job_state import SlurmJobState
 from job.submit_state import SubmitState
 from slurm_monitor.serverconn import Connector, SlurmServer
 from slurm_monitor.monitor import slurm_search
@@ -33,7 +34,7 @@ from job.db_job_submit import dBJobSubmitService
 from job.SingleJobDataItemService import singleJobDataItemService
 from utils.log import Log
 from functools import partial
-from db.db_partition import dBPartionService
+from db.db_partition import dBPartitionService
 from db.db_running_job import dbRunningJobService
 
 from utils.scheduler import Scheduler
@@ -50,7 +51,7 @@ def handleJobDataItem():
           time.localtime(int(time.time())))))
     # 待处理的作业条目信息, 此时可以通过策略的不同
     runningRecords = dBJobSubmitService.getSubmitRecords(job_total_ids)
-    partions = dBPartionService.get_available_partitions()
+    partions = dBPartitionService.get_available_partitions()
     if len(runningRecords) > 0 and len(partions) > 0:
         print("共有待处理作业类型: %d个, 可用分区为: %d" %
               (len(runningRecords), len(partions)))
@@ -172,7 +173,7 @@ def submitJob(batchFile: str, partition: PartitionStatus):
         jobId = int(result.strip("\n").split()[3])
 
     print(f"调度之后生成作业id为{jobId}")
-    return jobId, "R"
+    return jobId, SlurmJobState.RUNNING.value
 
 
 def getMaxProcessNum(record: JobDataSubmit, partion: PartitionStatus) -> int:

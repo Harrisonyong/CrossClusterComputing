@@ -8,25 +8,26 @@
 import sys
 from pathlib import Path
 from typing import List
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, selectinload
-from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
-from utils.config import Configuration
+from db.dp_cluster_status_table import PartitionStatus
 from sqlalchemy.ext.declarative import declarative_base
 from utils.config import dbConfig
-__all__ = ["DBService", "engine", "Session", "Base"]
 
+__all__ = ["engine", "Session", "Base"]
 
-engine=create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
+engine = create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
+
 
 class DBPartionService:
     """该接口用于封装于数据库分区的使用"""
 
-    def get_partition_by_cluster_partition(self, cluster_name: str, partition_name: str)->PartitionStatus:
+    def get_partition_by_cluster_partition(self, cluster_name: str, partition_name: str) -> PartitionStatus:
         """
         获取特定集群特定分区的节点信息
         :param db: 数据库会话
@@ -36,9 +37,9 @@ class DBPartionService:
         """
         with Session() as session:
             return session.query(PartitionStatus) \
-            .options(selectinload(PartitionStatus.clusterstatus)) \
-            .filter(PartitionStatus.cluster_name == cluster_name, PartitionStatus.partition_name == partition_name) \
-            .first()
+                .options(selectinload(PartitionStatus.clusterstatus)) \
+                .filter(PartitionStatus.cluster_name == cluster_name, PartitionStatus.partition_name == partition_name) \
+                .first()
 
     def get_partitions(self, skip: int = 0, limit: int = 100) -> List[PartitionStatus]:
         """
@@ -50,9 +51,8 @@ class DBPartionService:
         """
         with Session() as session:
             return session.query(PartitionStatus) \
-            .options(selectinload(PartitionStatus.clusterstatus)) \
-            .offset(skip).limit(limit).all()
-
+                .options(selectinload(PartitionStatus.clusterstatus)) \
+                .offset(skip).limit(limit).all()
 
     def get_available_partitions(self, skip: int = 0, limit: int = 1000) -> List[PartitionStatus]:
         """
@@ -64,17 +64,18 @@ class DBPartionService:
         """
         with Session() as session:
             return session.query(PartitionStatus) \
-            .options(selectinload(PartitionStatus.clusterstatus)) \
-                .filter(PartitionStatus.nodes_avail > 0 ).offset(skip).limit(limit).all()
+                .options(selectinload(PartitionStatus.clusterstatus)) \
+                .filter(PartitionStatus.nodes_avail > 0).offset(skip).limit(limit).all()
 
 
+dBPartitionService = DBPartionService()
 
-dBPartionService = DBPartionService()
 
 def test():
-    print(dBPartionService.get_available_partitions())
-    print(dBPartionService.get_partition_by_cluster_partition("slurm1", "allNodes").clusterstatus)
-    print(dBPartionService.get_partitions())
+    print(dBPartitionService.get_available_partitions())
+    print(dBPartitionService.get_partition_by_cluster_partition("slurm1", "allNodes").clusterstatus)
+    print(dBPartitionService.get_partitions())
+
 
 if __name__ == '__main__':
     test()

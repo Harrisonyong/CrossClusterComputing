@@ -6,10 +6,13 @@
 # description: 投递记录的状态
 
 from enum import Enum
+
+
 class SubmitState(Enum):
     UN_HANDLE = "unhandle"
     HANDLING = "handling"
     HANDLED  = "handled"
+
 
 if __name__ == '__main__':
     print (SubmitState.HANDLED.value)
