@@ -34,6 +34,8 @@ def reschedule(cluster_name):
     """
     jobs_needs_reschedule = DBRunningJobService.query_jobs_needs_reschedule(cluster_name)
     singleJobDataItemService.addBatch(get_corresponding_job_items(jobs_needs_reschedule))
+    DBRunningJobService.delete_batch(jobs_needs_reschedule)
+
 
 
 def get_corresponding_job_items(jobs: List[RunningJob]) -> List[SingleJobDataItem]:
@@ -75,7 +77,10 @@ def update_running_job_state(cluster_name):
     print(f"一共有{len(running_jobs)}个作业处于运行中")
     ids = [job1.job_id for job1 in running_jobs]
     current_job_states = get_current_job_states(cluster_name, ids)
+    print(current_job_states)
     for job in running_jobs:
+        if str(job.job_id) not in current_job_states:
+            continue
         job.state = current_job_states[str(job.job_id)]
     DBRunningJobService.addBatch(running_jobs)
 
@@ -86,6 +91,7 @@ def get_current_job_states(cluster_name, ids):
         stdout, stderr = slurm.sacct(ids)
         for _ in range(2):
             next(stdout)
+
         current_job_states = {line.split()[0]: line.split()[5] for line in stdout if "." not in line.split()[0]}
     return current_job_states
 

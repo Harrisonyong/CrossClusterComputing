@@ -17,7 +17,7 @@ class DateUtils:
 
     def jobNowStr(self):
         now = datetime.now()
-        return now.strftime('%Y-%m-%d-%H-%M-%S')
+        return now.strftime('%Y-%m-%d-%H-%M-%S-%f')
 
 
 dateUtils = DateUtils()

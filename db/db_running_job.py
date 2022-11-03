@@ -33,6 +33,13 @@ class DBRunningJobService:
             session.commit()
 
     @staticmethod
+    def delete_batch(running_jobs: List[RunningJob]):
+        job_ids = [job.job_id for job in running_jobs]
+        with Session() as session:
+            session.query(RunningJob).filter(RunningJob.primary_id.in_(job_ids)).delete(synchronize_session=False)
+            session.commit()
+
+    @staticmethod
     def addBatch(runningJobs: List[RunningJob]):
         '添加一组运行作业记录到数据库中'
         assert len(runningJobs) > 0, "确保存在插入数据库的作业数据条目"
