@@ -23,7 +23,6 @@ Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
 
 
-
 class DBClusterService:
     def get_cluster_by_ip(self, ip: str) -> ClusterStatus:
         """

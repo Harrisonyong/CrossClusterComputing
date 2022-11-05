@@ -46,6 +46,7 @@ def reschedule(cluster_name):
     @param cluster_name: 集群名称
     """
     jobs_needs_reschedule = DBRunningJobService.query_jobs_needs_reschedule(cluster_name)
+    print(f"重新需要调度的作业有：{len(jobs_needs_reschedule)}")
     singleJobDataItemService.addBatch(get_corresponding_job_items(jobs_needs_reschedule))
     DBRunningJobService.delete_batch(jobs_needs_reschedule)
 

@@ -12,8 +12,8 @@ from typing import List
 sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, selectinload
-from db.dp_cluster_status_table import PartitionStatus
+from sqlalchemy.orm import sessionmaker, selectinload, joinedload
+from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
 from sqlalchemy.ext.declarative import declarative_base
 from utils.config import dbConfig
 
@@ -37,7 +37,7 @@ class DBPartionService:
         """
         with Session() as session:
             return session.query(PartitionStatus) \
-                .options(selectinload(PartitionStatus.clusterstatus)) \
+                .options(joinedload(PartitionStatus.clusterstatus)) \
                 .filter(PartitionStatus.cluster_name == cluster_name, PartitionStatus.partition_name == partition_name) \
                 .first()
 
@@ -51,7 +51,7 @@ class DBPartionService:
         """
         with Session() as session:
             return session.query(PartitionStatus) \
-                .options(selectinload(PartitionStatus.clusterstatus)) \
+                .options(joinedload(PartitionStatus.clusterstatus)) \
                 .offset(skip).limit(limit).all()
 
     def get_available_partitions(self, skip: int = 0, limit: int = 1000) -> List[PartitionStatus]:
@@ -64,7 +64,7 @@ class DBPartionService:
         """
         with Session() as session:
             return session.query(PartitionStatus) \
-                .options(selectinload(PartitionStatus.clusterstatus)) \
+                .options(joinedload(PartitionStatus.clusterstatus)) \
                 .filter(PartitionStatus.nodes_avail > 0).offset(skip).limit(limit).all()
 
 
@@ -73,8 +73,8 @@ dBPartitionService = DBPartionService()
 
 def test():
     print(dBPartitionService.get_available_partitions())
-    print(dBPartitionService.get_partition_by_cluster_partition("slurm1", "allNodes").clusterstatus)
-    print(dBPartitionService.get_partitions())
+    # print(dBPartitionService.get_partition_by_cluster_partition("slurm1", "allNodes*").clusterstatus)
+    # print(dBPartitionService.get_partitions())
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ import os
 import stat
 import time
 from typing import List
+from db.db_cluster import dBClusterService
 
 from db.db_partition import dBPartitionService
 from db.db_running_job import dbRunningJobService
@@ -53,9 +54,9 @@ def schedule(running_submit_records: List[JobDataSubmit], partions: List[Partiti
         schedule_submit_record(submit, partions)
 
 
-def can_schedule(record: JobDataSubmit, partions: List[PartitionStatus]):
+def can_schedule(record: JobDataSubmit, partitions: List[PartitionStatus]):
     """判断该类型的作业是否可以被当前可用的分区列表进行调度"""
-    for partition in partions:
+    for partition in partitions:
         if partition.can_schedule(record):
             return True
     return False
@@ -97,6 +98,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     job_descriptor = get_job_descriptor(record, job_data_items)
 
     generate_slurm_batch_file(batch_file_name, resource_descriptor, job_descriptor)
+
     job_id, job_status = submit_job(batch_file_name, partition)
 
     # 写入运行作业信息
@@ -145,7 +147,8 @@ def submit_job(batch_file: str, partition: PartitionStatus):
     batchFile: 批处理脚本绝对路径，在集群中路径是统一的一致的
     partion: 作业提交的分区
     """
-    with SlurmServer.fromPartition(partition) as slurm:
+    cluster = dBClusterService.get_cluster_by_name(partition.cluster_name)
+    with SlurmServer.from_cluster(cluster) as slurm:
         stdout, stderr = slurm.sbatch("/root/task.sh")
         result = stdout.read().decode("utf-8")
         if "Submitted batch" not in result:
