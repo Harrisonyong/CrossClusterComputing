@@ -149,7 +149,7 @@ def submit_job(batch_file: str, partition: PartitionStatus):
     """
     cluster = dBClusterService.get_cluster_by_name(partition.cluster_name)
     with SlurmServer.from_cluster(cluster) as slurm:
-        stdout, stderr = slurm.sbatch("/root/task.sh")
+        stdout, stderr = slurm.sbatch(batch_file)
         result = stdout.read().decode("utf-8")
         if "Submitted batch" not in result:
             raise Exception(
