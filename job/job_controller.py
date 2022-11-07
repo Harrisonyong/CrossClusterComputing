@@ -36,7 +36,7 @@ async def create_submit(submit: Submit):
     assert os.path.exists(submit.data_dir), "not found {} file.".format(submit.data_dir) 
     assert os.path.exists(submit.execute_file_path), "not found {} file.".format(submit.execute_file_path)
     
-    jobDataSubmit = submitService.fromUserSubmit(submit)
+    jobDataSubmit = submitService.from_user_submit(submit)
     submitService.save_submit(jobDataSubmit)
     
     return Response.success(data=submit)
