@@ -10,6 +10,7 @@ import os
 import threading
 import time
 from datetime import datetime
+from typing import List
 
 from db.db_service import dbService
 from db.dp_job_data_submit_table import JobDataSubmit
@@ -52,9 +53,9 @@ class SubmitService:
     def all(self):
         return dbService.query_all(JobDataSubmit)
 
-    def fromUserSubmit(self, submit: Submit):
-        '从用户传入的作业投递数据构造投递实体与数据库映射'
-        dataSubmit = JobDataSubmit(
+    def from_user_submit(self, submit: Submit):
+        """从用户传入的作业投递数据构造投递实体与数据库映射"""
+        data_submit = JobDataSubmit(
             job_name=submit.job_name,
             job_total_id=int(round(time.time() * 1000)),
             data_dir=submit.data_dir,
@@ -66,15 +67,15 @@ class SubmitService:
             transfer_begin_time=datetime.now(),
             transfer_end_time=datetime.now(),
         )
-        return dataSubmit
+        return data_submit
 
-    def transfer(self, job_total_id: int, singleJobDataItems: list[SingleJobDataItem]):
-        """转换过程，该函数应该为事务，保持一致性。"""
-        '''同时，当前未考虑异常情况，即线程崩溃，若要解决该问题，可以保存线程号'''
+    def transfer(self, job_total_id: int, single_job_data_items: List[SingleJobDataItem]):
+        """转换过程，该函数应该为事务，保持一致性。
+        同时，当前未考虑异常情况，即线程崩溃，若要解决该问题，可以保存线程号"""
         print("异步开始, 处理线程为: ", threading.currentThread().getName(),
               "线程号：", threading.currentThread().native_id)
 
         print("记录更新为正在处理中, 记录批号", job_total_id)
         dBJobSubmitService.updateSubmitRecordHandling(job_total_id)
-        dbService.addBatchItem(singleJobDataItems)
+        dbService.addBatchItem(single_job_data_items)
         dBJobSubmitService.updateSubmitRecordHandled(job_total_id)
