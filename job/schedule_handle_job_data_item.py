@@ -25,6 +25,7 @@ from slurm_monitor.serverconn import SlurmServer
 from utils.date_utils import dateUtils
 
 sbatch_file_path = os.path.join("D:\\200-Git\\220-slurm\\bash", "root")
+computation_result_path = "/mnt/ecosystem/materials/comsol/cross/output"
 
 
 def handle_job_data_item():
@@ -178,9 +179,9 @@ def get_job_descriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataIt
     则运行过程为
     bash run.sh a1.txt, a2.txt, a3.txt
     """
-    exe_statements = "bash " + record.execute_file_path + " "
-    for item in jobDataItems:
-        exe_statements += item.data_file + " "
+    exe_statements = "bash " + record.execute_file_path + "--input_files="
+    exe_statements += ",".join([item.data_file for item in jobDataItems])
+    exe_statements += "--output_dir="+computation_result_path
     return exe_statements
 
 
