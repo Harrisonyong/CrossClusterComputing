@@ -55,5 +55,5 @@ async def stop():
     scheduler.remove_all_jobs()
 
 if __name__ == '__main__':
-    uvicorn.run(app='main:app', host="127.0.0.1",
+    uvicorn.run(app='main:app', host="0.0.0.0",
                 port=8001, reload=True, debug=True)

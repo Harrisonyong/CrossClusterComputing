@@ -24,7 +24,7 @@ from slurm_monitor.monitor import slurm_search
 from slurm_monitor.serverconn import SlurmServer
 from utils.date_utils import dateUtils
 
-sbatch_file_path = os.path.join("D:\\200-Git\\220-slurm\\bash", "root")
+sbatch_file_path = os.path.join("/mnt/ecosystem/materials/comsol/cross/", "bash")
 computation_result_path = "/mnt/ecosystem/materials/comsol/cross/output"
 
 
@@ -154,7 +154,7 @@ def submit_job(batch_file: str, partition: PartitionStatus):
         result = stdout.read().decode("utf-8")
         if "Submitted batch" not in result:
             raise Exception(
-                f"任务调度失败，slurm脚本为: ${batch_file}, 集群为{partition.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
+                f"任务调度失败，slurm脚本为: {batch_file}, 集群为{partition.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
 
         # Submitted batch job 1151
         job_id = int(result.strip("\n").split()[3])
@@ -179,9 +179,9 @@ def get_job_descriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataIt
     则运行过程为
     bash run.sh a1.txt, a2.txt, a3.txt
     """
-    exe_statements = "bash " + record.execute_file_path + "--input_files="
+    exe_statements = "bash " + record.execute_file_path + " --input_files="
     exe_statements += ",".join([item.data_file for item in jobDataItems])
-    exe_statements += "--output_dir="+computation_result_path
+    exe_statements += " --output_dir="+computation_result_path
     return exe_statements
 
 

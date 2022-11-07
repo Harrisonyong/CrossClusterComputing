@@ -50,7 +50,6 @@ def partition_parse(std_out):
     for line in std_out:
         info = line.strip("\n").split()
         partition_name, avail, nodes, state = info[0], info[1], info[3], info[4]
-        partition_name = "".join(filter(str.isalnum, partition_name))
         partition_dict[partition_name].setdefault("state", "alloc")
         partition_dict[partition_name].setdefault("avail_nodes", 0)
         partition_dict[partition_name].setdefault("nodes", 0)
@@ -72,8 +71,7 @@ def slurm_search(name, host, port, user, password):
             partition = schema.PartitionCreate(cluster_name = name, partition_name = partition_name, nodes = info.get("nodes"), nodes_avail = info.get("avail_nodes"), avail = info.get("avail"), state=info.get("state"))
             log.info(create_partition(partition=partition, db=db))
 
-def add_slurm_clusters():
-    clusters = []
+def add_slurm_monitor_job(seconds):
     with database.Session() as db:
         for name, conf in config.ServiceConfig():
             host, port, user, password = conf.host, conf.port, conf.user, conf.password
@@ -83,9 +81,10 @@ def add_slurm_clusters():
                 print(f'db-{name} is exists')
             else:
                 crud.create_cluster(db, cluster=cluster)
-            clusters.append(cluster)
-    return clusters
-
+            print(f"host = {host}, port={port}, user={user}, password={password}")
+            scheduler.add_job(slurm_search, args=[
+                            name,host, port, user, password], id=f"{name}", trigger="interval", seconds=seconds, replace_existing=True)
+            print(f"定时监控任务{name}启动")
 
 @router.post("/cluster/", response_model=schema.Cluster)
 def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
@@ -122,8 +121,5 @@ def get_partitions(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
 
 @router.put("/part/{cluster_name}/{partition_name}/", response_model=schema.Partition)
 def relate_cluster_partition(cluster_name: str, partition_name: str, db:Session = Depends(get_db)):
-    try:
-        partition = crud.get_partition_by_cluster_partition(db=db, cluster_name=cluster_name, partition_name=partition_name)
-    except:
-        return Response.error(code=404, msg="partition is not found")
+    partition = crud.get_partition_by_cluster_partition(db=db, cluster_name=cluster_name, partition_name=partition_name)
     return partition

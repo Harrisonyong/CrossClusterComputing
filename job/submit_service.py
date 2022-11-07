@@ -72,8 +72,7 @@ class SubmitService:
     def transfer(self, job_total_id: int, single_job_data_items: List[SingleJobDataItem]):
         """转换过程，该函数应该为事务，保持一致性。
         同时，当前未考虑异常情况，即线程崩溃，若要解决该问题，可以保存线程号"""
-        print("异步开始, 处理线程为: ", threading.currentThread().getName(),
-              "线程号：", threading.currentThread().native_id)
+        print("异步开始, 处理线程为: ", threading.current_thread().name)
 
         print("记录更新为正在处理中, 记录批号", job_total_id)
         dBJobSubmitService.updateSubmitRecordHandling(job_total_id)
