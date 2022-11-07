@@ -43,15 +43,15 @@ def handle_job_data_item():
     schedule(running_submits, partitions)
 
 
-def schedule(running_submit_records: List[JobDataSubmit], partions: List[PartitionStatus]):
+def schedule(running_submit_records: List[JobDataSubmit], partitions: List[PartitionStatus]):
     for submit in running_submit_records:
-        if not can_schedule(submit, partions):
+        if not can_schedule(submit, partitions):
             print("该作业：%d, 作业名称: %s无法被此时的分区列表进行调度" %
                   (submit.job_total_id, submit.job_name))
             continue
         print("该作业：%d, 作业名称: %s可以被此时的分区列表进行调度" %
               (submit.job_total_id, submit.job_name))
-        schedule_submit_record(submit, partions)
+        schedule_submit_record(submit, partitions)
 
 
 def can_schedule(record: JobDataSubmit, partitions: List[PartitionStatus]):
@@ -64,6 +64,7 @@ def can_schedule(record: JobDataSubmit, partitions: List[PartitionStatus]):
 
 def schedule_submit_record(record: JobDataSubmit, partitions: List[PartitionStatus]):
     """使用此组分区列表调度该作业投递记录"""
+    # 由于一次循环可能无法将record类的所有单条数据全部调度完，因此使用while循环
     while can_schedule(record, partitions):
         print(f"处理作业:{record.job_name}, job_total_id: {record.job_total_id:d}")
         print(f"该作业仍有{singleJobDataItemService.countOfItems(record.job_total_id)}个作业条目未处理")
@@ -73,14 +74,14 @@ def schedule_submit_record(record: JobDataSubmit, partitions: List[PartitionStat
         del partitions[avail_index]
 
 
-def find_available_partition(record: JobDataSubmit, partions: List[PartitionStatus]) -> int:
+def find_available_partition(record: JobDataSubmit, partitions: List[PartitionStatus]) -> int:
     """找到能够用于处理该作业条目的某个分区，返回可用的分区序号"""
-    for index, partition in enumerate(partions):
+    for index, partition in enumerate(partitions):
         if partition.can_schedule(record):
             return index
 
     raise Exception(
-        "在find_available_partition中，partitions: %s, 无法调度作业: %s" % (partions, record))
+        "在find_available_partition中，partitions: %s, 无法调度作业: %s" % (partitions, record))
 
 
 def handle(record: JobDataSubmit, partition: PartitionStatus):
@@ -102,7 +103,6 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     job_id, job_status = submit_job(batch_file_name, partition)
 
     # 写入运行作业信息
-
     dbRunningJobService.add(get_running_job(
         record, partition, job_data_items, batch_file_name, job_id, job_status))
 
@@ -117,7 +117,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
 
 
 def get_running_job(record: JobDataSubmit, partition: PartitionStatus, jobDataItems: List[SingleJobDataItem],
-                    batchFileName: str, jobId: int, jobStatus: str):
+                    batch_file_name: str, job_id: int, job_status: str):
     """
     根据投递数据、分区信息、脚本名称、作业id、作业状态生成
     """
@@ -125,9 +125,9 @@ def get_running_job(record: JobDataSubmit, partition: PartitionStatus, jobDataIt
     job.cluster_name = partition.cluster_name
     job.partition_name = partition.partition_name
     job.file_list = f"{[item.data_file for item in jobDataItems]}"
-    job.job_id = jobId
-    job.state = jobStatus
-    job.sbatch_file_path = batchFileName
+    job.job_id = job_id
+    job.state = job_status
+    job.sbatch_file_path = batch_file_name
     job.job_total_id = record.job_total_id
     return job
 
@@ -143,9 +143,9 @@ def trigger_partition_change(partition: PartitionStatus):
 
 
 def submit_job(batch_file: str, partition: PartitionStatus):
-    """根据分区信息，使用paramico框架来提交作业
-    batchFile: 批处理脚本绝对路径，在集群中路径是统一的一致的
-    partion: 作业提交的分区
+    """根据分区信息，使用paramiko框架来提交作业
+    batch_file: 批处理脚本绝对路径，在集群中路径是统一的一致的
+    partition: 作业提交的分区
     """
     cluster = dBClusterService.get_cluster_by_name(partition.cluster_name)
     with SlurmServer.from_cluster(cluster) as slurm:
@@ -206,8 +206,8 @@ def get_slurm_job_name(record: JobDataSubmit):
 
 def generate_slurm_batch_file(absolute_batch_file_name: str, resource_descriptor: str, job_descriptor: str):
     """使用文件io操作创建slurm脚本文件,并添加可执行权限"""
-    with open(absolute_batch_file_name, 'w') as batchFile:
-        batchFile.write(resource_descriptor)
-        batchFile.write(job_descriptor)
+    with open(absolute_batch_file_name, 'w') as batch_file:
+        batch_file.write(resource_descriptor)
+        batch_file.write(job_descriptor)
     os.chmod(absolute_batch_file_name, stat.S_IEXEC)
     return
