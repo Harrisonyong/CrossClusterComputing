@@ -72,7 +72,8 @@ def slurm_search(name, host, port, user, password):
             partition = schema.PartitionCreate(cluster_name = name, partition_name = partition_name, nodes = info.get("nodes"), nodes_avail = info.get("avail_nodes"), avail = info.get("avail"), state=info.get("state"))
             log.info(create_partition(partition=partition, db=db))
 
-def add_slurm_monitor_job(seconds):
+def add_slurm_clusters():
+    clusters = []
     with database.Session() as db:
         for name, conf in config.ServiceConfig():
             host, port, user, password = conf.host, conf.port, conf.user, conf.password
@@ -82,10 +83,9 @@ def add_slurm_monitor_job(seconds):
                 print(f'db-{name} is exists')
             else:
                 crud.create_cluster(db, cluster=cluster)
-            print(f"host = {host}, port={port}, user={user}, password={password}")
-            scheduler.add_job(slurm_search, args=[
-                            name,host, port, user, password], id=f"{name}", trigger="interval", seconds=seconds, replace_existing=True)
-            print(f"定时监控任务{name}启动")
+            clusters.append(cluster)
+    return clusters
+
 
 @router.post("/cluster/", response_model=schema.Cluster)
 def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
