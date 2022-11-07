@@ -21,6 +21,19 @@ from utils.log import Log
 log = Log.ulog("schedule_update_job.log")
 
 
+def schedule_update_job():
+    """周期更新作业的状态"""
+    log.info(f"开始更新作业运行状态, 当前时刻为{dateUtils.nowStr()}")
+    clusters = DBRunningJobService.query_clusters_has_uncompleted_job()
+    handle_clusters(clusters)
+
+
+def handle_clusters(clusters: List[str]):
+    """依次处理每一个集群信息"""
+    for cluster in clusters:
+        handle(cluster)
+
+
 def handle(cluster_name: str):
     """处理每一个集群中的所有未处于终止状态的作业"""
     update_running_job_state(cluster_name)
@@ -33,9 +46,9 @@ def reschedule(cluster_name):
     @param cluster_name: 集群名称
     """
     jobs_needs_reschedule = DBRunningJobService.query_jobs_needs_reschedule(cluster_name)
+    print(f"重新需要调度的作业有：{len(jobs_needs_reschedule)}")
     singleJobDataItemService.addBatch(get_corresponding_job_items(jobs_needs_reschedule))
     DBRunningJobService.delete_batch(jobs_needs_reschedule)
-
 
 
 def get_corresponding_job_items(jobs: List[RunningJob]) -> List[SingleJobDataItem]:
@@ -75,9 +88,13 @@ def update_running_job_state(cluster_name):
     """
     running_jobs = DBRunningJobService.query_running_jobs(cluster_name)
     print(f"一共有{len(running_jobs)}个作业处于运行中")
-    ids = [job1.job_id for job1 in running_jobs]
-    current_job_states = get_current_job_states(cluster_name, ids)
+    current_job_states = get_current_job_states(cluster_name, [job1.job_id for job1 in running_jobs])
     print(current_job_states)
+    update_running_jobs_state_to_db(current_job_states, running_jobs)
+
+
+def update_running_jobs_state_to_db(current_job_states, running_jobs):
+    """使用最新的作业状态字典更新运行作业记录到数据库中"""
     for job in running_jobs:
         if str(job.job_id) not in current_job_states:
             continue
@@ -86,27 +103,30 @@ def update_running_job_state(cluster_name):
 
 
 def get_current_job_states(cluster_name, ids):
+    """
+    获取集群中作业的实时状态, 通过查询，可以看到只有数量为7的才具有状态
+    @param cluster_name: 集群名称
+    @param ids: 待获取的作业id列表
+    @return: 返回字典，其中形如{"12": "COMPLETED", "13", "RUNNING"}
+    """
+
     cluster = dBClusterService.get_cluster_by_name(cluster_name)
     with SlurmServer.from_cluster(cluster) as slurm:
         stdout, stderr = slurm.sacct(ids)
         for _ in range(2):
             next(stdout)
-
-        current_job_states = {line.split()[0]: line.split()[5] for line in stdout if "." not in line.split()[0]}
-    return current_job_states
+        return {line.split()[0]: line.split()[5] for line in stdout if has_valid_job_state(line)}
 
 
-def schedule_update_job():
-    """周期更新作业的状态"""
-    log.info(f"开始更新作业运行状态, 当前时刻为{dateUtils.nowStr()}")
-    clusters = DBRunningJobService.query_clusters_has_uncompleted_job()
-    handle_clusters(clusters)
+def has_valid_job_state(line: str):
+    """
+    判断line是否具有正常的作业运行状态，
+    '2750               test   allNodes       root          1  COMPLETED      0:0
+    '
 
+    '2787               test   allNodes      '
+    '3505.batch        batch                  root          1    RUNNING      0:0 '
+    '3769         allocation                  root          0    PENDING      0:0 '
 
-def handle_clusters(clusters: List[str]):
-    """依次处理每一个集群信息"""
-    for cluster in clusters:
-        handle(cluster)
-
-
-
+    """
+    return len(line.split()) == 7
