@@ -5,12 +5,13 @@
 @author: songquanheng
 @file: schedule_service.py
 @time: 2022/11/3 15:42
-@desc: 
+@desc:
 """
 from job.schedule_handle_job_data_item import handle_job_data_item
 from job.schedule_update_job import schedule_update_job
-
 from slurm_monitor.monitor import add_slurm_monitor_job
+# from job.submit_service import handleJobDataItem
+from slurm_monitor.monitor import add_slurm_clusters, slurm_search
 from utils.scheduler import Scheduler
 
 scheduler = Scheduler.AsyncScheduler()
