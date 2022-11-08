@@ -9,8 +9,6 @@
 """
 from job.schedule_handle_job_data_item import handle_job_data_item
 from job.schedule_update_job import schedule_update_job
-from slurm_monitor.monitor import add_slurm_monitor_job
-# from job.submit_service import handleJobDataItem
 from slurm_monitor.monitor import add_slurm_clusters, slurm_search
 from utils.scheduler import Scheduler
 
@@ -39,3 +37,14 @@ def add_job_data_item_scan_job(interval: int):
     scheduler.add_job(handle_job_data_item, args=[], id=f"job_data_item_scan_job",
                       trigger="interval", seconds=interval, replace_existing=True)
     print("定时扫描任务监控任务启动")
+
+
+def add_slurm_monitor_job(interval: int):
+    """
+        循环将不同的集群分区监控添加到定时任务中
+    """
+    clusters = add_slurm_clusters()
+    for cluster in clusters:
+        scheduler.add_job(slurm_search, args=[
+            cluster.cluster_name, cluster.ip, cluster.port, cluster.user, cluster.password], id=f"{cluster.cluster_name}", trigger="interval", seconds=interval, replace_existing=True)
+        print(f"定时监控任务{cluster.cluster_name}启动")
