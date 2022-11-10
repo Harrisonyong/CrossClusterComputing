@@ -9,15 +9,10 @@
 import sys
 from pathlib import Path
 from fastapi import APIRouter
-from db.db_service import DBService
-
 from utils.response import Response
-
 sys.path.append(str(Path(__file__).parent.parent))
-from utils.config import Configuration as config
-
-from .dp_cluster_status_table import ClusterStatus
-from .db_service import dbService
+from db.dp_cluster_status_table import ClusterStatus
+from db.db_service import dbService
 
 router = APIRouter(
     prefix="/db-controller",
@@ -35,13 +30,13 @@ async def dbConfig():
     return Response.success(msg="查询集群配置成功", data=dbService.dbConfig())
 
 @router.get("/all-clusters")
-async def allClusters():    
+async def allClusters():
     clusters = dbService.query_all(ClusterStatus)
     return Response.success(msg="查询集群所有数据成功", data=clusters)
 
 @router.get("/add-cluster")
 async def addCluster():
-    
+
     cluster=ClusterStatus(
         name = "slurm1",
         state = "online",

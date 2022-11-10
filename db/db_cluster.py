@@ -10,17 +10,8 @@ import sys
 from pathlib import Path
 from typing import List
 sys.path.append(str(Path(__file__).parent.parent))
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, selectinload
-from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
-from sqlalchemy.ext.declarative import declarative_base
-from utils.config import dbConfig
-
-
-engine=create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
-Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base = declarative_base()
+from db.dp_cluster_status_table import ClusterStatus
+from db.db_service import Session
 
 
 class DBClusterService:
@@ -57,13 +48,3 @@ class DBClusterService:
 
 
 dBClusterService = DBClusterService()
-
-
-def test():
-    print(dBClusterService.get_cluster_by_ip("10.101.12.48"))
-    print(dBClusterService.get_cluster_by_name("slurm1"))
-    print(dBClusterService.get_clusters())
-
-
-if __name__ == "__main__":
-    test()

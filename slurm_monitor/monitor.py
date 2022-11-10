@@ -20,11 +20,9 @@ from utils.response import Response
 from fastapi import APIRouter, Depends, HTTPException
 from slurm_monitor.serverconn import SlurmServer
 from sqlalchemy.orm import Session
-from db import dp_cluster_status_table as models
 from db import db_service as database
 from db import crud, schema
 
-models.Base.metadata.create_all(bind=database.engine)
 
 log = Log.ulog("monitor.log")
 router = APIRouter(

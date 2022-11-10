@@ -8,12 +8,10 @@
 @email :yangqinglin@zhejianglab.com
 '''
 from datetime import datetime
-
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-
 from db.dp_job_data_submit_table import JobDataSubmit
-from .db_service import Base
+from db.db_service import Base
 
 
 class ClusterStatus(Base):

@@ -7,10 +7,8 @@
 
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine, func, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from sqlalchemy import Column, Integer, String, DateTime
+from db.db_service import Base
 
 
 class JobDataSubmit(Base):

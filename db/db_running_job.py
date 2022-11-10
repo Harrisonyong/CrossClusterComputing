@@ -4,25 +4,14 @@
 # email: wannachan@outlook.com
 # date: 2022/10/31 周一 14:49:32
 # description: 用于实现与数据库运行作业表进行交互
-import os
 import sys
 from pathlib import Path
 from typing import List
-
-from sqlalchemy import create_engine, distinct, and_
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy import distinct, and_
 from job.slurm_job_state import SlurmJobState
-
 sys.path.append(str(Path(__file__).parent.parent))
-from db.db_service import dbService
+from db.db_service import dbService, Session
 from db.dp_running_job_table import RunningJob
-
-engine = create_engine(dbService.dbConfig()["file"], connect_args={
-    "check_same_thread": False})
-Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base = declarative_base()
 
 
 class DBRunningJobService:
@@ -80,21 +69,3 @@ class DBRunningJobService:
 
 
 dbRunningJobService = DBRunningJobService()
-
-
-def test():
-    job = RunningJob()
-    job.cluster_name = "slurm1"
-    job.partition_name = "allNodes"
-    job.job_id = 333
-    job.job_total_id = 1
-    job.file_list = "[1.txt, 2.txt]"
-    job.sbatch_file_path = "D:\\1\\2\\3.txt"
-    job.state = "R"
-    dbRunningJobService.add(job)
-    dbRunningJobService.complete(job)
-    print(str(dbRunningJobService.query_clusters_has_running_job()))
-
-
-if __name__ == '__main__':
-    test()

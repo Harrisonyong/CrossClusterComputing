@@ -8,20 +8,16 @@
 import sys
 from pathlib import Path
 from typing import List
-
 sys.path.append(str(Path(__file__).parent.parent))
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, selectinload, joinedload
-from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, joinedload
+from db.dp_cluster_status_table import PartitionStatus
 from utils.config import dbConfig
 
-__all__ = ["engine", "Session", "Base"]
+__all__ = ["engine", "Session"]
 
 engine = create_engine(dbConfig["file"], connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base = declarative_base()
 
 
 class DBPartionService:
@@ -69,13 +65,3 @@ class DBPartionService:
 
 
 dBPartitionService = DBPartionService()
-
-
-def test():
-    print(dBPartitionService.get_available_partitions())
-    # print(dBPartitionService.get_partition_by_cluster_partition("slurm1", "allNodes*").clusterstatus)
-    # print(dBPartitionService.get_partitions())
-
-
-if __name__ == '__main__':
-    test()

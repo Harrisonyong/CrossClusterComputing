@@ -6,11 +6,13 @@
 # description: 该文件负责周期性的处理作业条目数据，组织成slurm脚本，并通过paramico提交作业
 
 import os
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 import stat
 import time
 from typing import List
 from db.db_cluster import dBClusterService
-
 from db.db_partition import dBPartitionService
 from db.db_running_job import dbRunningJobService
 from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
@@ -26,7 +28,7 @@ from utils.date_utils import dateUtils
 
 sbatch_file_path = os.path.join("/mnt/ecosystem/materials/comsol/cross/", "bash")
 computation_result_path = "/mnt/ecosystem/materials/comsol/cross/output"
-
+# 修改配置文件
 
 def handle_job_data_item():
     """执行定期扫描程序，处理所有的作业数据条目"""
@@ -106,7 +108,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     # 写入运行作业信息
     dbRunningJobService.add(get_running_job(
         record, partition, job_data_items, batch_file_name, job_id, job_status))
-
+    # 数据不同步问题
     # 移除作业条目
     ids = [item.primary_id for item in job_data_items]
     singleJobDataItemService.deleteBatch(ids)

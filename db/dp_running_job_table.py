@@ -6,11 +6,8 @@
 # description: 运行作业表
 
 from datetime import datetime
-import string
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine, func, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from sqlalchemy import Column, Integer, String, DateTime
+from db.db_service import Base
 
 
 class RunningJob(Base):
@@ -20,7 +17,7 @@ class RunningJob(Base):
     primary_id = Column(Integer, primary_key=True)
 
     job_total_id = Column(Integer)
-    
+
     '正在处理的文件名列表'
     file_list = Column(String)
     'slurm脚本路径'
@@ -37,7 +34,7 @@ class RunningJob(Base):
     '记录创建时间'
     create_time = Column(DateTime, nullable=False, default=datetime.now)
     update_time = Column(DateTime(timezone=True), default = datetime.now, onupdate = datetime.now, comment = "修改时间")
-    
+
 
     def __repr__(self):
         return "<RunningJob(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
