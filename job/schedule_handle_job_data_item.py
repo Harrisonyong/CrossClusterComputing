@@ -29,7 +29,7 @@ from slurm_monitor.monitor import slurm_search
 from slurm_monitor.serverconn import SlurmServer
 from utils.date_utils import dateUtils
 
-computation_result_path = "D:\\200-Git\\220-slurm\\bash\\output"
+computation_result_path = "/mnt/ecosystem/materials/cross-cluster-computing/output"
 
 
 def handle_job_data_item():
@@ -172,7 +172,7 @@ def get_resource_descriptor(record: JobDataSubmit, partition: PartitionStatus) -
     """获取资源描述信息"""
     resource_str = "#!/bin/bash" + os.linesep + "#SBATCH -J %s" % (
         get_slurm_batch_canonical_file_name(record)) + os.linesep + "#SBATCH -N %d" % (
-                       partition.nodes_avail) + os.linesep + "#SBATCH -p %s" % partition.partition_name + os.linesep
+                       partition.nodes_avail) + os.linesep + "#SBATCH -p %s" % partition.partition_name + os.linesep + "#SBATCH -n 64" + os.linesep
     return resource_str
 
 
@@ -185,7 +185,7 @@ def get_job_descriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataIt
     """
     exe_statements = "bash " + record.execute_file_path + " --input_files="
     exe_statements += ",".join([item.data_file for item in jobDataItems])
-    exe_statements += " --output_dir="+computation_result_path
+    exe_statements += " --output_dir=" + computation_result_path
     return exe_statements
 
 
@@ -212,8 +212,24 @@ def get_slurm_job_name(record: JobDataSubmit):
 
 def generate_slurm_batch_file(absolute_batch_file_name: str, resource_descriptor: str, job_descriptor: str):
     """使用文件io操作创建slurm脚本文件,并添加可执行权限"""
+
+    if not submit_sbatch_dir_exist(absolute_batch_file_name):
+        make_submit_sbatch_dir(absolute_batch_file_name)
+
     with open(absolute_batch_file_name, 'w') as batch_file:
         batch_file.write(resource_descriptor)
         batch_file.write(job_descriptor)
     os.chmod(absolute_batch_file_name, stat.S_IEXEC)
     return
+
+
+def make_submit_sbatch_dir(absolute_batch_file_name):
+    """
+    为投递创建脚本的根目录 /mnt/ecosystem/.../sbatch-file/1668065975353
+    @param absolute_batch_file_name:/mnt/ecosystem/.../sbatch-file/1668065975353/comsoljob-845286.sh
+    """
+    os.makedirs(os.path.dirname(absolute_batch_file_name))
+
+
+def submit_sbatch_dir_exist(absolute_batch_file_name: str) -> bool:
+    return os.path.exists(os.path.dirname(absolute_batch_file_name))
