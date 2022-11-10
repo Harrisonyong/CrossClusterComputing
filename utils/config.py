@@ -11,15 +11,18 @@ import configparser
 from pathlib import Path
 from textwrap import indent
 
-__all__= ["Configuration"]
+__all__ = ["Configuration"]
+
+from utils.sbatch_config import SbatchConfig
+
 
 class _Config:
-    def __init__(self, config, sec:str) -> None:
+    def __init__(self, config, sec: str) -> None:
         self.sec = sec
         self.secs = {}
         for o in config.options(sec):
             self.secs[o] = config.get(sec, o)
-    
+
     def __getattr__(self, opt):
         try:
             return self.secs[opt]
@@ -36,9 +39,9 @@ class ConfigReader:
         self.index = 0
 
     def config(self, sec):
-        assert sec in self.parser.sections(); f"{sec} not in {self.config_file}"
+        assert sec in self.parser.sections();
+        f"{sec} not in {self.config_file}"
         return _Config(self.parser, sec)
-
 
     def __iter__(self):
         return self
@@ -52,7 +55,7 @@ class ConfigReader:
 
 
 class Configuration:
-    
+
     def ServiceConfig():
         slurms = ConfigReader("config/service.config")
         return slurms
@@ -60,6 +63,11 @@ class Configuration:
     def dbConfig():
         db = ConfigReader("config/db.ini").config("db")
         return {"host": db.host, "file": db.file}
+
+    @staticmethod
+    def sbatch_config() -> SbatchConfig:
+        config = ConfigReader("config/db.ini").config("sbatch-file")
+        return SbatchConfig(config.sbatch_storage_dir)
 
 '''sqlite数据库配置对象'''
 dbConfig = Configuration.dbConfig()

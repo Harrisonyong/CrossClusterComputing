@@ -8,6 +8,9 @@
 import os
 import sys
 from pathlib import Path
+
+from utils import Configuration
+
 sys.path.append(str(Path(__file__).parent.parent))
 import stat
 import time
@@ -26,9 +29,8 @@ from slurm_monitor.monitor import slurm_search
 from slurm_monitor.serverconn import SlurmServer
 from utils.date_utils import dateUtils
 
-sbatch_file_path = os.path.join("/mnt/ecosystem/materials/comsol/cross/", "bash")
-computation_result_path = "/mnt/ecosystem/materials/comsol/cross/output"
-# 修改配置文件
+computation_result_path = "D:\\200-Git\\220-slurm\\bash\\output"
+
 
 def handle_job_data_item():
     """执行定期扫描程序，处理所有的作业数据条目"""
@@ -190,7 +192,8 @@ def get_job_descriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataIt
 def get_slurm_batch_file_name(record: JobDataSubmit) -> str:
     """根据作业信息和根目录获取批处理作业文件名称"""
     canonical_name = get_slurm_batch_canonical_file_name(record)
-    return sbatch_file_path + os.path.sep + canonical_name
+    sbatch_config = Configuration.sbatch_config()
+    return sbatch_config.get_slurm_batch_file_path(record.job_total_id, canonical_name)
 
 
 def get_slurm_batch_canonical_file_name(record: JobDataSubmit):
