@@ -5,18 +5,14 @@
 # date: 2022/10/19 周三 11:31:57
 # description: 该文件负责周期性的处理作业条目数据，组织成slurm脚本，并通过paramico提交作业
 
-import os
 import sys
 from pathlib import Path
 
 from job.job_delivery import JobDelivery
-from utils import Configuration
 
 sys.path.append(str(Path(__file__).parent.parent))
-import stat
 import time
 from typing import List
-from db.db_cluster import dBClusterService
 from db.db_partition import dBPartitionService
 from db.db_running_job import dbRunningJobService
 from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
@@ -25,9 +21,7 @@ from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.db_job_submit import dBJobSubmitService
-from job.slurm_job_state import SlurmJobState
 from slurm_monitor.monitor import slurm_search
-from slurm_monitor.serverconn import SlurmServer
 from utils.date_utils import dateUtils
 
 computation_result_path = "/mnt/ecosystem/materials/cross-cluster-computing/output"
@@ -140,91 +134,3 @@ def trigger_partition_change(partition: PartitionStatus):
     password = cluster.password
     slurm_search(name=partition.cluster_name, host=host, port=port, user=user, password=password)
     print(f"分区状态更新完成")
-
-
-def submit_job(batch_file: str, partition: PartitionStatus):
-    """根据分区信息，使用paramiko框架来提交作业
-    batch_file: 批处理脚本绝对路径，在集群中路径是统一的一致的
-    partition: 作业提交的分区
-    """
-    cluster = dBClusterService.get_cluster_by_name(partition.cluster_name)
-    with SlurmServer.from_cluster(cluster) as slurm:
-        stdout, stderr = slurm.sbatch(batch_file)
-        result = stdout.read().decode("utf-8")
-        if "Submitted batch" not in result:
-            raise Exception(
-                f"任务调度失败，slurm脚本为: {batch_file}, 集群为{partition.cluster_name}, 分区为{partition.partition_name}, 结果为{result}")
-
-        # Submitted batch job 1151
-        job_id = int(result.strip("\n").split()[3])
-
-    print(f"调度之后生成作业id为{job_id}")
-    return job_id, SlurmJobState.RUNNING.value
-
-
-def get_resource_descriptor(record: JobDataSubmit, partition: PartitionStatus) -> str:
-    print(f"record: {record}, partition: {partition}")
-    """获取资源描述信息"""
-    resource_str = "#!/bin/bash" + os.linesep + "#SBATCH -J %s" % (
-        get_slurm_batch_canonical_file_name(record)) + os.linesep + "#SBATCH -N %d" % (
-                       partition.nodes_avail) + os.linesep + "#SBATCH -p %s" % partition.partition_name + os.linesep + "#SBATCH -n 64" + os.linesep
-    return resource_str
-
-
-def get_job_descriptor(record: JobDataSubmit, jobDataItems: List[SingleJobDataItem]) -> str:
-    """
-    作业实际执行的命令语句，调用封装好的脚本文件
-    执行脚本为run.sh
-    则运行过程为
-    bash run.sh a1.txt, a2.txt, a3.txt
-    """
-    exe_statements = "bash " + record.execute_file_path + " --input_files="
-    exe_statements += ",".join([item.data_file for item in jobDataItems])
-    exe_statements += " --output_dir=" + computation_result_path
-    return exe_statements
-
-
-def get_slurm_batch_file_name(record: JobDataSubmit) -> str:
-    """根据作业信息和根目录获取批处理作业文件名称"""
-    canonical_name = get_slurm_batch_canonical_file_name(record)
-    sbatch_config = Configuration.sbatch_config()
-    return sbatch_config.get_slurm_batch_file_path(record.job_total_id, canonical_name)
-
-
-def get_slurm_batch_canonical_file_name(record: JobDataSubmit):
-    """
-    根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
-    """
-    return "%s-%s-%s.sh" % (record.job_name, record.job_total_id, dateUtils.jobNowStr())
-
-
-def get_slurm_job_name(record: JobDataSubmit):
-    """
-    根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
-    """
-    return "%s-%s-%s" % (record.job_name, record.job_total_id, dateUtils.jobNowStr())
-
-
-def generate_slurm_batch_file(absolute_batch_file_name: str, resource_descriptor: str, job_descriptor: str):
-    """使用文件io操作创建slurm脚本文件,并添加可执行权限"""
-
-    if not submit_sbatch_dir_exist(absolute_batch_file_name):
-        make_submit_sbatch_dir(absolute_batch_file_name)
-
-    with open(absolute_batch_file_name, 'w') as batch_file:
-        batch_file.write(resource_descriptor)
-        batch_file.write(job_descriptor)
-    os.chmod(absolute_batch_file_name, stat.S_IEXEC)
-    return
-
-
-def make_submit_sbatch_dir(absolute_batch_file_name):
-    """
-    为投递创建脚本的根目录 /mnt/ecosystem/.../sbatch-file/1668065975353
-    @param absolute_batch_file_name:/mnt/ecosystem/.../sbatch-file/1668065975353/comsoljob-845286.sh
-    """
-    os.makedirs(os.path.dirname(absolute_batch_file_name))
-
-
-def submit_sbatch_dir_exist(absolute_batch_file_name: str) -> bool:
-    return os.path.exists(os.path.dirname(absolute_batch_file_name))
