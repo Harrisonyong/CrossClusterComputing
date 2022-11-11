@@ -78,16 +78,18 @@ class DBJobSubmitService:
         with Session() as session:
             return session.query(JobDataSubmit).filter(JobDataSubmit.job_total_id.in_(job_total_ids)).order_by(JobDataSubmit.create_time).all()
 
+
 dBJobSubmitService = DBJobSubmitService()
 
 
-def testGetSubmitRecord():
+def test_get_submit_record():
     record = dBJobSubmitService.getSubmitRecord(1666233358280)
     print(type(record))
     print(record)
     print(record.job_total_id)
 
-def testGetSubmitRecordsAccordingToIds():
+
+def test_get_submit_records_according_to_ids():
     records = dBJobSubmitService.getSubmitRecords([1666233358280, 1666235599074, 1666235666819, 1666235753230, 1666235901459, 1666235978961, 1666236078066])
     
     for record in records :
@@ -95,4 +97,4 @@ def testGetSubmitRecordsAccordingToIds():
 
 
 if __name__ == '__main__':
-    testGetSubmitRecordsAccordingToIds()
+    test_get_submit_records_according_to_ids()
