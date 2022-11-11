@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 
+from job.job_delivery import JobDelivery
 from utils import Configuration
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -99,21 +100,15 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     if len(job_data_items) < max_schedule_num:
         print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={dateUtils.nowStr()}")
 
-    batch_file_name = get_slurm_batch_file_name(record)
-    resource_descriptor = get_resource_descriptor(record, partition)
-    job_descriptor = get_job_descriptor(record, job_data_items)
-
-    generate_slurm_batch_file(batch_file_name, resource_descriptor, job_descriptor)
-
-    job_id, job_status = submit_job(batch_file_name, partition)
-
+    job_delivery = JobDelivery(record, partition, job_data_items)
+    job_id, job_status = job_delivery.delivery()
     # 写入运行作业信息
     dbRunningJobService.add(get_running_job(
-        record, partition, job_data_items, batch_file_name, job_id, job_status))
+        record, partition, job_data_items, job_delivery.slurm_script_path, job_id, job_status))
     # 数据不同步问题
     # 移除作业条目
-    ids = [item.primary_id for item in job_data_items]
-    singleJobDataItemService.deleteBatch(ids)
+    single_item_primary_ids = [item.primary_id for item in job_data_items]
+    singleJobDataItemService.deleteBatch(single_item_primary_ids)
     print(f"删除了{len(job_data_items)}个作业条目")
     # 触发分区状态修改
     trigger_partition_change(partition)
