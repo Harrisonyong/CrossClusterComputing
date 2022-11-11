@@ -87,6 +87,9 @@ def update_running_job_state(cluster_name):
     @param cluster_name:
     """
     running_jobs = DBRunningJobService.query_running_jobs(cluster_name)
+    if len(running_jobs) == 0:
+        return
+
     print(f"一共有{len(running_jobs)}个作业处于运行中")
     current_job_states = get_current_job_states(cluster_name, [job1.job_id for job1 in running_jobs])
     print(current_job_states)
