@@ -24,6 +24,8 @@ class JobDataSubmit(Base):
     job_name = Column(String)
     '待处理数据目录'
     data_dir = Column(String)
+    '结果输出目录'
+    output_dir = Column(String)
     '执行文件目录'
     execute_file_path = Column(String)
     '单条执行耗费资源，使用json'

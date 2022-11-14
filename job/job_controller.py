@@ -32,12 +32,13 @@ async def welcome():
 
 @router.post("/job-submit/create")
 async def create_submit(submit: Submit):
+    """主要负责用户的作业投递的存储和转换"""
     print(submit.json())
     assert os.path.exists(submit.data_dir), "not found {} file.".format(submit.data_dir) 
     assert os.path.exists(submit.execute_file_path), "not found {} file.".format(submit.execute_file_path)
-    
-    jobDataSubmit = submitService.from_user_submit(submit)
-    submitService.save_submit(jobDataSubmit)
+    assert os.path.exists(submit.output_dir), "not found {} file.".format(submit.output_dir)
+
+    SubmitService.save_submit(SubmitService.from_user_submit(submit))
     
     return Response.success(data=submit)
 

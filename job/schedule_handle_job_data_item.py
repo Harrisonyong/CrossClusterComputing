@@ -18,13 +18,10 @@ from db.db_running_job import dbRunningJobService
 from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_running_job_table import RunningJob
-from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.db_job_submit import dBJobSubmitService
 from slurm_monitor.monitor import slurm_search
 from utils.date_utils import dateUtils
-
-computation_result_path = "/mnt/ecosystem/materials/cross-cluster-computing/output"
 
 
 def handle_job_data_item():

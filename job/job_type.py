@@ -14,12 +14,15 @@ class SingleItemAllocation(BaseModel):
     memory: int
     unit: str
 
+
 class Submit(BaseModel):
     user: str
     data_dir: str
+    output_dir: str
     execute_file_path: str
     job_name: str
     resource_per_item: SingleItemAllocation
+
 
 def test():
     allocation = SingleItemAllocation(node=1, memory=3, unit="G")

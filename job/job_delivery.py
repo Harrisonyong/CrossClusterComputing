@@ -21,8 +21,6 @@ from utils.date_utils import dateUtils
 from utils.slurm_resource_descriptor import SlurmResourceDescriptor
 from utils.slurm_script_generator import SlurmScriptGenerator
 
-computation_result_path = "/mnt/ecosystem/materials/cross-cluster-computing/output"
-
 
 class JobDelivery:
     """代表一次作业投递，其包括了作业投递、分区信息、具体投递的作业条目"""
@@ -31,6 +29,9 @@ class JobDelivery:
         self.job_data_submit = submit
         self.partition = partition
         self.job_data_items = job_data_items
+        self.job_id = None
+        self.job_state = SlurmJobState.RUNNING.value
+
         print("in JobDelivery.__init__ before execute")
         self.slurm_script_path = self.get_slurm_batch_file_name()
         print(f"in JobDelivery.__init__ before execute {self.slurm_script_path}")
@@ -42,8 +43,12 @@ class JobDelivery:
         script_generator.generate_script_file(resource_descriptor, job_descriptor)
 
     def delivery(self):
+        """投递的主要过程包括
+        1. 产生slurm脚本
+        2. 提交作业生成作业id
+        """
         self.generate_slurm_script()
-        self.submit_job
+        self.submit_job()
 
     def get_slurm_batch_file_name(self) -> str:
         """根据作业信息和根目录获取批处理作业文件名称"""
@@ -86,8 +91,8 @@ class JobDelivery:
         """
         record = self.job_data_submit
         exe_statements = "bash " + record.execute_file_path + " --input_files="
-        exe_statements += ",".join([item.data_file for item in (self.job_data_items)])
-        exe_statements += " --output_dir=" + computation_result_path
+        exe_statements += ",".join([item.data_file for item in self.job_data_items])
+        exe_statements += " --output_dir=" + self.job_data_submit.output_dir
         return exe_statements
 
     def submit_job(self):
@@ -111,4 +116,3 @@ class JobDelivery:
         print(f"调度之后生成作业id为{job_id}")
         self.job_id = job_id
         self.job_state = SlurmJobState.RUNNING.value
-        return job_id, SlurmJobState.RUNNING.value
