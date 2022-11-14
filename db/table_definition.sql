@@ -1,23 +1,25 @@
-# 作业投递表定义
+/*作业投递表定义*/
 CREATE TABLE dp_job_data_submit_table (
-    primary_id             INTEGER  PRIMARY KEY AUTOINCREMENT,
-    user_name              STRING,
-    job_total_id           INTEGER  UNIQUE
-                                    NOT NULL,
-    job_name               STRING   NOT NULL,
-    data_dir               STRING   NOT NULL,
-    execute_file_path      STRING   NOT NULL,
-    single_item_allocation STRING   NOT NULL,
-    create_time            DATETIME,
-    transfer_flag          STRING   NOT NULL,
-    transfer_state         STRING   NOT NULL,
-    transfer_begin_time    DATETIME,
-    transfer_end_time      DATETIME
+  primary_id             INTEGER  NOT NULL,
+  user_name              VARCHAR,
+  job_total_id           INTEGER  NOT NULL
+      UNIQUE,
+  job_name               VARCHAR  NOT NULL,
+  data_dir               VARCHAR  NOT NULL,
+  output_dir             VARCHAR  NOT NULL,
+  execute_file_path      VARCHAR  NOT NULL,
+  single_item_allocation VARCHAR  NOT NULL,
+  create_time            DATETIME NOT NULL,
+  transfer_flag          VARCHAR,
+  transfer_state         VARCHAR,
+  transfer_begin_time    DATETIME,
+  transfer_end_time      DATETIME,
+  PRIMARY KEY (
+               primary_id
+      )
 );
 
-
-
-# 单条作业数据， 其中job_total_id为外键，关联dp_job_data_submit_table中job_total_id
+/*单条作业数据， 其中job_total_id为外键，关联dp_job_data_submit_table中job_total_id*/
 CREATE TABLE dp_single_job_data_item_table (
     primary_id   INTEGER PRIMARY KEY AUTOINCREMENT,
     job_total_id INTEGER REFERENCES dp_job_data_submit_table (job_total_id) 
@@ -25,6 +27,7 @@ CREATE TABLE dp_single_job_data_item_table (
     data_file    STRING
 );
 
+/*集群状态表*/
 CREATE TABLE dp_cluster_status_table (
     primary_id   INTEGER       NOT NULL,
     cluster_name VARCHAR,
@@ -40,6 +43,7 @@ CREATE TABLE dp_cluster_status_table (
     )
 );
 
+/*分区状态表*/
 CREATE TABLE dp_partition_table (
     primary_id     INTEGER       NOT NULL,
     cluster_name   VARCHAR (255),
@@ -59,7 +63,7 @@ CREATE TABLE dp_partition_table (
     REFERENCES dp_cluster_status_table (cluster_name) 
 );
 
-# 运行作业表
+/*运行作业表*/
 CREATE TABLE dp_running_job_table (
     primary_id       INTEGER  PRIMARY KEY AUTOINCREMENT,
     job_total_id     INTEGER,
