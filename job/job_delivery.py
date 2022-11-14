@@ -43,7 +43,7 @@ class JobDelivery:
 
     def delivery(self):
         self.generate_slurm_script()
-        return self.submit_job()
+        self.submit_job
 
     def get_slurm_batch_file_name(self) -> str:
         """根据作业信息和根目录获取批处理作业文件名称"""
@@ -109,4 +109,6 @@ class JobDelivery:
             job_id = int(result.strip("\n").split()[3])
 
         print(f"调度之后生成作业id为{job_id}")
+        self.job_id = job_id
+        self.job_state = SlurmJobState.RUNNING.value
         return job_id, SlurmJobState.RUNNING.value
