@@ -28,7 +28,7 @@ class SubmitService:
         """保存用户的作业投递数据"""
         job_total_id = job_data_submit.job_total_id
         single_job_data_items = SubmitService.get_single_job_data_items(job_data_submit)
-        dbService.addItem(job_data_submit)
+        dbService.add_item(job_data_submit)
 
         # 使用异步线程处理该投递作业相关的数据条目
         threading.Thread(target=SubmitService.transfer, args=(
@@ -80,7 +80,7 @@ class SubmitService:
         同时，当前未考虑异常情况，即线程崩溃，若要解决该问题，可以保存线程号"""
         print("异步转换投递数据成单条作业条目开始, 处理线程为: ", threading.current_thread().name)
         print("记录更新为正在处理中, 记录批号", job_total_id)
-        dBJobSubmitService.updateSubmitRecordHandling(job_total_id)
-        dbService.addBatchItem(single_job_data_items)
-        dBJobSubmitService.updateSubmitRecordHandled(job_total_id)
+        dBJobSubmitService.update_submit_record_handling(job_total_id)
+        dbService.add_batch_item(single_job_data_items)
+        dBJobSubmitService.update_submit_record_handled(job_total_id)
         print("异步转换投递数据成单条作业条目结束, 处理线程为: ", threading.current_thread().name)

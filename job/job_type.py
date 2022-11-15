@@ -8,8 +8,9 @@
 
 from pydantic import BaseModel
 
+
 class SingleItemAllocation(BaseModel):
-    '单个待处理条目所需要的资源'
+    """单个待处理条目所需要的资源"""
     node: float
     memory: int
     unit: str
@@ -29,6 +30,7 @@ def test():
     print(allocation.dict())
     print(allocation.json())
     print(allocation.schema_json())
+
 
 if __name__ == '__main__':
     test()

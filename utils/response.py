@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-'''
+"""
 @Description : 该Response类用于统一返回格式
-@Datatime :2022-10-13 13:50:56
+@Datetime :2022-10-13 13:50:56
 @Author :songquanheng
 @email :wannachan@outlook.com
-'''
+"""
 import json
 
 

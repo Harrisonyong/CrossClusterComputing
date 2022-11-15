@@ -5,7 +5,7 @@
 @author: songquanheng
 @file: slurm_script_generator.py
 @time: 2022/11/11 10:46
-@desc: 
+@desc: 用于生成slrum脚本
 """
 import os
 import stat

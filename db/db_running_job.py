@@ -15,10 +15,10 @@ from db.dp_running_job_table import RunningJob
 
 
 class DBRunningJobService:
-    def add(self, runningJob: RunningJob):
+    def add(self, running_job: RunningJob):
         """新增一条运行作业到数据表中"""
         with Session() as session:
-            session.add(runningJob)
+            session.add(running_job)
             session.commit()
 
     @staticmethod
@@ -29,13 +29,13 @@ class DBRunningJobService:
             session.commit()
 
     @staticmethod
-    def addBatch(runningJobs: List[RunningJob]):
-        '添加一组运行作业记录到数据库中'
-        assert len(runningJobs) > 0, "确保存在插入数据库的作业数据条目"
-        dbService.addBatchItem(runningJobs)
+    def add_batch(running_jobs: List[RunningJob]):
+        """添加一组运行作业记录到数据库中"""
+        assert len(running_jobs) > 0, "确保存在插入数据库的作业数据条目"
+        dbService.add_batch_item(running_jobs)
 
     def query_all(self) -> List[RunningJob]:
-        '查询作业数据表中的全部记录'
+        """查询作业数据表中的全部记录"""
         return dbService.query_all(RunningJob)
 
     def complete(self, running_job: RunningJob):

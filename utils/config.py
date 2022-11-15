@@ -56,11 +56,11 @@ class ConfigReader:
 
 class Configuration:
 
-    def ServiceConfig():
+    def service_config(self):
         slurms = ConfigReader("config/service.config")
         return slurms
 
-    def dbConfig():
+    def db_config(self):
         db = ConfigReader("config/db.ini").config("db")
         return {"host": db.host, "file": db.file}
 
@@ -69,5 +69,6 @@ class Configuration:
         config = ConfigReader("config/db.ini").config("sbatch-file")
         return SbatchConfig(config.sbatch_storage_dir)
 
-'''sqlite数据库配置对象'''
-dbConfig = Configuration.dbConfig()
+
+'sqlite数据库配置对象'
+dbConfig = Configuration.db_config()

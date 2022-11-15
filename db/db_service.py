@@ -28,19 +28,19 @@ class DBService:
         session.close()
         return items
 
-    def addItem(self, item):
+    def add_item(self, item):
         session = Session()
         session.add(item)
         session.commit()
         session.close()
     
-    def addBatchItem(self, items):
+    def add_batch_item(self, items):
         session = Session()
         session.add_all(items)
         session.commit()
         session.close()
 
-    def dbConfig(self):
+    def db_config(self):
         return dbConfig
 
 

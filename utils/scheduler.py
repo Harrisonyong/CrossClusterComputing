@@ -19,7 +19,9 @@ from utils.log import Log
 
 
 __all__ = ["Scheduler"]
-class _AsyncSchduler():
+
+
+class _AsyncScheduler():
 
     __instance_lock = threading.Lock()
     sqlite = "sqlite:///" + str(Path(__file__).parent.parent/"data/jobs.db")
@@ -71,7 +73,7 @@ class _AsyncSchduler():
 class Scheduler:
     @classmethod
     def AsyncScheduler(cls):
-        return _AsyncSchduler().asyncscheduler
+        return _AsyncScheduler().asyncscheduler
 
     @classmethod
     def BackgroundScheduler(cls):

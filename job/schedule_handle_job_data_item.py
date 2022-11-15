@@ -32,7 +32,7 @@ def handle_job_data_item():
                                                      tm=time.strftime('%Y:%m:%d %H:%M:%S',
                                                                       time.localtime(int(time.time())))))
     # 待处理的作业条目信息, 此时可以通过策略的不同
-    running_submits = dBJobSubmitService.getSubmitRecords(job_total_ids)
+    running_submits = dBJobSubmitService.get_submit_records(job_total_ids)
     partitions = dBPartitionService.get_available_partitions()
     if len(running_submits) <= 0 or len(partitions) <= 0:
         return
@@ -89,7 +89,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
         record.job_total_id, max_schedule_num)
     if len(job_data_items) < max_schedule_num:
-        print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={dateUtils.nowStr()}")
+        print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={dateUtils.now_str()}")
 
     job_delivery = JobDelivery(record, partition, job_data_items)
     job_delivery.delivery()

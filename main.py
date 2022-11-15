@@ -45,17 +45,20 @@ app.include_router(job_controller.router)
 async def root():
     return {"message": "Welcom To MultiServerManagement"}
 
+
 @app.on_event("startup")
 async def scan():
-    '''添加了定时任务数据条目扫描程序'''
+    """添加了定时任务数据条目扫描程序"""
     print("启动应用程序")
     add_schedule_service()
     scheduler.start()
+
 
 @app.on_event("shutdown")
 async def shutdown_evnet():
     print("关闭应用程序")
     scheduler.remove_all_jobs()
+
 
 @app.get("/stop")
 async def stop():

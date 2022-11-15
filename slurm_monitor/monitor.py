@@ -37,6 +37,7 @@ def get_db():
     finally:
         db.close()
 
+
 def partition_parse(std_out):
     """解析slurm输出的分区信息
     param: std_out :集群分区信息的查询结果
@@ -58,6 +59,7 @@ def partition_parse(std_out):
             partition_dict[partition_name]["avail_nodes"] += int(nodes)
     return partition_dict
 
+
 def slurm_search(name, host, port, user, password):
     with SlurmServer(host=host, port=port, user=user, password=password) as slurm:
         std_out, std_err = slurm.sinfo()
@@ -70,10 +72,11 @@ def slurm_search(name, host, port, user, password):
             partition = schema.PartitionCreate(cluster_name = name, partition_name = partition_name, nodes = info.get("nodes"), nodes_avail = info.get("avail_nodes"), avail = info.get("avail"), state=info.get("state"))
             log.info(create_partition(partition=partition, db=db))
 
+
 def add_slurm_clusters():
     clusters = []
     with database.Session() as db:
-        for name, conf in config.ServiceConfig():
+        for name, conf in config.service_config():
             host, port, user, password = conf.host, conf.port, conf.user, conf.password
             cluster = schema.ClusterCreate(cluster_name=name, ip=host, port=port, user=user, password=password,state="avail")
             db_cluster = crud.get_cluster_by_name(db, cluster_name=name)
@@ -84,6 +87,7 @@ def add_slurm_clusters():
             clusters.append(cluster)
     return clusters
 
+
 @router.post("/cluster/", response_model=schema.Cluster)
 def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
     db_cluster = crud.get_cluster_by_name(db,  cluster_name = cluster.cluster_name)
@@ -91,10 +95,12 @@ def create_cluster(cluster:schema.ClusterCreate, db:Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail = "cluster is already existed")
     return crud.create_cluster(db=db, cluster=cluster)
 
+
 @router.get("/clusters/", response_model=List[schema.Cluster])
 def read_clusters(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
     clusters = crud.get_clusters(db, skip=skip, limit=limit)
     return clusters
+
 
 @router.get("/clust/{ip}", response_model=schema.Cluster)
 def read_cluster(ip:str, db:Session=Depends(get_db)):
@@ -102,6 +108,7 @@ def read_cluster(ip:str, db:Session=Depends(get_db)):
     if db_cluster is None:
         raise HTTPException(status_code=404, detail="cluster not found")
     return db_cluster
+
 
 @router.post("/partition/")
 def create_partition(partition:schema.PartitionCreate, db:Session = Depends(get_db)):
@@ -112,10 +119,12 @@ def create_partition(partition:schema.PartitionCreate, db:Session = Depends(get_
         crud.create_partition(db=db, partition=partition)
         return Response.success(msg="create success")
 
+
 @router.get("/partitions/", response_model=List[schema.Partition])
 def get_partitions(skip:int=0, limit:int=100, db:Session=Depends(get_db)):
     partitions = crud.get_partitions(db, skip=skip, limit=limit)
     return partitions
+
 
 @router.put("/part/{cluster_name}/{partition_name}/", response_model=schema.Partition)
 def relate_cluster_partition(cluster_name: str, partition_name: str, db:Session = Depends(get_db)):

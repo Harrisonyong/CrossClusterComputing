@@ -19,7 +19,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 
 
-engine = create_engine(dbService.dbConfig()["file"], connect_args={
+engine = create_engine(dbService.db_config()["file"], connect_args={
                        "check_same_thread": False})
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
@@ -31,11 +31,11 @@ class SingleJobDataItemService:
         dataItem = SingleJobDataItem()
         dataItem.job_total_id = job_total_id
         dataItem.data_file = data_file
-        dbService.addItem(dataItem)
+        dbService.add_item(dataItem)
 
     def addBatch(self, singleJobDataItems: List[SingleJobDataItem]):
         '添加一组作业数据条目到数据库中'
-        dbService.addBatchItem(singleJobDataItems)
+        dbService.add_batch_item(singleJobDataItems)
 
     def query_all(self):
         '查询作业数据表中的全部记录'

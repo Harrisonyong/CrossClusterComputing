@@ -23,7 +23,7 @@ log = Log.ulog("schedule_update_job.log")
 
 def schedule_update_job():
     """周期更新作业的状态"""
-    log.info(f"开始更新作业运行状态, 当前时刻为{dateUtils.nowStr()}")
+    log.info(f"开始更新作业运行状态, 当前时刻为{dateUtils.now_str()}")
     clusters = DBRunningJobService.query_clusters_has_uncompleted_job()
     handle_clusters(clusters)
 
@@ -47,7 +47,7 @@ def reschedule(cluster_name):
     """
     jobs_needs_reschedule = DBRunningJobService.query_jobs_needs_reschedule(cluster_name)
     print(f"重新需要调度的作业有：{len(jobs_needs_reschedule)}")
-    singleJobDataItemService.addBatch(get_corresponding_job_items(jobs_needs_reschedule))
+    singleJobDataItemService.add_batch(get_corresponding_job_items(jobs_needs_reschedule))
     DBRunningJobService.delete_batch(jobs_needs_reschedule)
 
 
@@ -102,7 +102,7 @@ def update_running_jobs_state_to_db(current_job_states, running_jobs):
         if str(job.job_id) not in current_job_states:
             continue
         job.state = current_job_states[str(job.job_id)]
-    DBRunningJobService.addBatch(running_jobs)
+    DBRunningJobService.add_batch(running_jobs)
 
 
 def get_current_job_states(cluster_name, ids):

@@ -66,7 +66,7 @@ class JobDelivery:
         """
         根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
         """
-        return "%s-%s-%s" % (self.job_data_submit.job_name, self.job_data_submit.job_total_id, dateUtils.jobNowStr())
+        return "%s-%s-%s" % (self.job_data_submit.job_name, self.job_data_submit.job_total_id, dateUtils.job_now_str())
 
     def get_slurm_batch_file_path(self, sbatch_dir: str, batch_file_name: str):
         """该函数用于返回通过整体作业号和slurm脚本名称生成的脚本的整体路径"""

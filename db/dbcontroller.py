@@ -27,7 +27,7 @@ async def welcome():
 
 @router.get("/db-config")
 async def dbConfig():
-    return Response.success(msg="查询集群配置成功", data=dbService.dbConfig())
+    return Response.success(msg="查询集群配置成功", data=dbService.db_config())
 
 @router.get("/all-clusters")
 async def allClusters():
@@ -44,5 +44,5 @@ async def addCluster():
         user_name = "root",
         password = "root"
         )
-    dbService.addItem(cluster)
+    dbService.add_item(cluster)
     return Response.success(msg="数据插入成功", data=cluster)
