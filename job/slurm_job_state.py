@@ -8,6 +8,7 @@
 @desc: 
 """
 from enum import Enum
+from typing import List
 
 
 class SlurmJobState(Enum):
@@ -20,7 +21,7 @@ class SlurmJobState(Enum):
     NODE_FAIL = "NODE_FAIL"
     OUT_OF_MEMORY = "OUT_OF_MEMORY"
     PENDING = "PENDING"
-    PREEMPTED="PREEMPTED"
+    PREEMPTED = "PREEMPTED"
     RUNNING = "RUNNING"
     REQUEUED = "REQUEUED"
     RESIZING = "RESIZING"
@@ -33,6 +34,9 @@ class SlurmJobState(Enum):
         return job_state not in SlurmJobState.states_end()
 
     @staticmethod
-    def states_end():
+    def states_end() -> List[str]:
         """作业正常结束或者取消的状态认为，不需要再重新调度"""
-        return [SlurmJobState.PENDING.value, SlurmJobState.CANCELLED.value, SlurmJobState.CANCELLED_PLUS.value, SlurmJobState.COMPLETED.value, SlurmJobState.RUNNING.value]
+        return [SlurmJobState.CANCELLED.value,
+                SlurmJobState.CANCELLED_PLUS.value,
+                SlurmJobState.COMPLETED.value,
+                SlurmJobState.RUNNING.value]
