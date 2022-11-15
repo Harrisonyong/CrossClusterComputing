@@ -20,7 +20,7 @@ def add_schedule_service():
     为CrossClusterComputing添加定时调度服务，为时间配置做准备
     """
     add_slurm_monitor_job(5)
-    add_schedule_update_job(10)
+    add_schedule_update_job(5)
     add_job_data_item_scan_job(5)
 
 
