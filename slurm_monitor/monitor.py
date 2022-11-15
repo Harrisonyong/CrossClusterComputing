@@ -7,7 +7,6 @@
 @Author :yangqinglin
 @email :yangqinglin@zhejianglab.com
 '''
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -63,7 +62,8 @@ def slurm_search(name, host, port, user, password):
     with SlurmServer(host=host, port=port, user=user, password=password) as slurm:
         std_out, std_err = slurm.sinfo()
         partition_dict = partition_parse(std_out=std_out)
-        if std_err: log.error(std_err.read().decode("utf8"))
+        error = std_err.read().decode("utf8")
+        if error: log.error(error)
 
     with database.Session() as db:
         for partition_name, info in partition_dict.items():
@@ -78,7 +78,7 @@ def add_slurm_clusters():
             cluster = schema.ClusterCreate(cluster_name=name, ip=host, port=port, user=user, password=password,state="avail")
             db_cluster = crud.get_cluster_by_name(db, cluster_name=name)
             if db_cluster:
-                print(f'db-{name} is exists')
+                print(f'cluster-{name} record is already in db')
             else:
                 crud.create_cluster(db, cluster=cluster)
             clusters.append(cluster)
