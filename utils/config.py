@@ -56,11 +56,11 @@ class ConfigReader:
 
 class Configuration:
 
-    def service_config(self):
+    def service_config():
         slurms = ConfigReader("config/service.config")
         return slurms
 
-    def db_config(self):
+    def db_config():
         db = ConfigReader("config/db.ini").config("db")
         return {"host": db.host, "file": db.file}
 

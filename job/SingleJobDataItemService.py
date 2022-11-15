@@ -33,7 +33,7 @@ class SingleJobDataItemService:
         dataItem.data_file = data_file
         dbService.add_item(dataItem)
 
-    def addBatch(self, singleJobDataItems: List[SingleJobDataItem]):
+    def add_batch(self, singleJobDataItems: List[SingleJobDataItem]):
         '添加一组作业数据条目到数据库中'
         dbService.add_batch_item(singleJobDataItems)
 
@@ -62,7 +62,7 @@ class SingleJobDataItemService:
         """查询系统中属于job_total_id的指定数量的作业数据条目"""
         with Session() as session:
             return session.query(SingleJobDataItem).limit(limit).all()
-    
+
     def deleteBatch(self, ids: List[int]) -> int:
         """
         批量删除单条作业条目
@@ -71,7 +71,7 @@ class SingleJobDataItemService:
         with Session() as session:
             session.query(SingleJobDataItem).filter(SingleJobDataItem.primary_id.in_(ids)).delete(synchronize_session=False)
             session.commit()
-        return 
+        return
 
 
 singleJobDataItemService = SingleJobDataItemService()
@@ -86,7 +86,7 @@ def testAddBatch():
         )
         dataItems.append(item)
 
-    singleJobDataItemService.addBatch(dataItems)
+    singleJobDataItemService.add_batch(dataItems)
 
 
 def testGroup():
@@ -105,7 +105,7 @@ def testDistinct():
     print(jobTotalIds)
 
 def testDelete():
-    
+
     singleJobDataItemService.deleteBatch([64, 65, 66, 67, 68])
 
 
