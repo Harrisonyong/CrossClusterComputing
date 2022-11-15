@@ -119,6 +119,7 @@ def get_running_job(job_delivery: JobDelivery):
     job.state = job_delivery.job_state
     job.sbatch_file_path = job_delivery.slurm_script_path
     job.job_total_id = job_delivery.job_data_submit.job_total_id
+    job.job_name = job_delivery.job_name
     return job
 
 

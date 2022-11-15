@@ -29,6 +29,7 @@ class RunningJob(Base):
     '作业id'
     job_id = Column(Integer)
 
+    job_name = Column(String)
     '作业运行状态'
     state = Column(String)
     '记录创建时间'

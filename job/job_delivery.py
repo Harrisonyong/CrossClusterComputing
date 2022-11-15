@@ -31,6 +31,7 @@ class JobDelivery:
         self.job_data_items = job_data_items
         self.job_id = None
         self.job_state = SlurmJobState.RUNNING.value
+        self.job_name = self.get_slurm_job_name()
 
         print("in JobDelivery.__init__ before execute")
         self.slurm_script_path = self.get_slurm_batch_file_name()
@@ -60,7 +61,7 @@ class JobDelivery:
         """
         根据作业投递条目获得batch脚本的名称 经典名称 只有最后的文件名称，不包含其他路径
         """
-        return "%s.sh" % (self.get_slurm_job_name())
+        return "%s.sh" % self.job_name
 
     def get_slurm_job_name(self):
         """

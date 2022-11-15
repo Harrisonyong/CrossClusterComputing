@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import List
 from sqlalchemy import distinct, and_
+
 from job.slurm_job_state import SlurmJobState
 sys.path.append(str(Path(__file__).parent.parent))
 from db.db_service import dbService, Session
@@ -48,7 +49,7 @@ class DBRunningJobService:
         """获取有运行作业的所有集群"""
         with Session() as session:
             result = session.query(distinct(RunningJob.cluster_name)) \
-                .filter(RunningJob.state != SlurmJobState.COMPLETED.value).all()
+                .filter(RunningJob.state.notin_(SlurmJobState.states_end())).all()
             return [item[0] for item in result]
 
     @staticmethod
@@ -64,7 +65,7 @@ class DBRunningJobService:
         with Session() as session:
             return session.query(RunningJob) \
                 .filter(
-                and_(RunningJob.state.not_in(SlurmJobState.states_end()), RunningJob.cluster_name == cluster_name)) \
+                and_(RunningJob.state.notin_(SlurmJobState.states_end()), RunningJob.cluster_name == cluster_name)) \
                 .all()
 
 
