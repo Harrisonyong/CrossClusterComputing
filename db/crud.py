@@ -54,7 +54,7 @@ def create_cluster(db: Session, cluster: schema.ClusterCreate):
     """
     db_cluster = models.ClusterStatus(cluster_name=cluster.cluster_name, ip=cluster.ip, port=cluster.port,
                                       state=cluster.state, user=cluster.user, password=cluster.password,
-                                      max_running_jobs_limit=cluster.max_running_jobs_limit)
+                                      max_submit_jobs_limit=cluster.max_submit_jobs_limit)
     db.add(db_cluster)
     db.commit()
     db.refresh(db_cluster)

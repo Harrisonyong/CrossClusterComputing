@@ -63,4 +63,4 @@ class Cluster(ClusterBase):
 class ClusterCreate(ClusterBase):
     state: str
     password: str
-    max_running_jobs_limit: int
+    max_submit_jobs_limit: int

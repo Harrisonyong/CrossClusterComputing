@@ -91,7 +91,7 @@ def add_slurm_clusters():
                                            user=user,
                                            password=password,
                                            state="avail",
-                                           max_running_jobs_limit=conf.max_running_jobs_limit)
+                                           max_submit_jobs_limit=conf.max_submit_jobs_limit)
             db_cluster = crud.get_cluster_by_name(db, cluster_name=name)
             if db_cluster:
                 print(f'cluster-{name} record is already in db')
