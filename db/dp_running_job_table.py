@@ -37,5 +37,5 @@ class RunningJob(Base):
     update_time = Column(DateTime(timezone=True), default = datetime.now, onupdate = datetime.now, comment = "修改时间")
 
     def __repr__(self):
-        return "<RunningJob(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
+        return "<RunningJob(job_total_id=%s, job_id=%s, job_name=%s, state=%s))>" % (self.job_total_id, str(self.job_id),self.job_name, self.state)
 

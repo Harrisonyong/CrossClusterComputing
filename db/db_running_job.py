@@ -24,9 +24,9 @@ class DBRunningJobService:
 
     @staticmethod
     def delete_batch(running_jobs: List[RunningJob]):
-        job_ids = [job.job_id for job in running_jobs]
+        job_primary_ids = [job.primary_id for job in running_jobs]
         with Session() as session:
-            session.query(RunningJob).filter(RunningJob.primary_id.in_(job_ids)).delete(synchronize_session=False)
+            session.query(RunningJob).filter(RunningJob.primary_id.in_(job_primary_ids)).delete(synchronize_session=False)
             session.commit()
 
     @staticmethod
@@ -65,7 +65,7 @@ class DBRunningJobService:
         with Session() as session:
             return session.query(RunningJob) \
                 .filter(
-                and_(RunningJob.state.notin_(SlurmJobState.states_end()), RunningJob.cluster_name == cluster_name)) \
+                and_(RunningJob.state.notin_(SlurmJobState.states_normal()), RunningJob.cluster_name == cluster_name)) \
                 .all()
 
 

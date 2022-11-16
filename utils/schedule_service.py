@@ -8,7 +8,7 @@
 @desc:
 """
 from job.schedule_handle_job_data_item import handle_job_data_item
-from job.schedule_update_job import schedule_update_job
+from job.schedule_update_job import schedule_update_job_state
 from slurm_monitor.monitor import add_slurm_clusters, slurm_search
 from utils.scheduler import Scheduler
 
@@ -27,7 +27,7 @@ def add_schedule_service():
 def add_schedule_update_job(interval: int):
     """添加定时单条数据扫描程序"""
     print("Enter add_schedule_update_job")
-    scheduler.add_job(schedule_update_job, args=[], id=f"schedule_update_job_thread",
+    scheduler.add_job(schedule_update_job_state, args=[], id=f"schedule_update_job_thread",
                       trigger="interval", seconds=interval, replace_existing=True)
 
 
