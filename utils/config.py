@@ -56,10 +56,11 @@ class ConfigReader:
 
 class Configuration:
 
+    @staticmethod
     def service_config():
-        slurms = ConfigReader("config/service.config")
-        return slurms
+        return ConfigReader("config/service.config")
 
+    @staticmethod
     def db_config():
         db = ConfigReader("config/db.ini").config("db")
         return {"host": db.host, "file": db.file}
