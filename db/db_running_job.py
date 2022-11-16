@@ -53,11 +53,11 @@ class DBRunningJobService:
             return [item[0] for item in result]
 
     @staticmethod
-    def query_running_jobs(cluster_name: str) -> List[RunningJob]:
+    def query_running_and_pending_jobs(cluster_name: str) -> List[RunningJob]:
         """根据获取集群中需要更新的作业"""
         with Session() as session:
             return session.query(RunningJob) \
-                .filter(and_(RunningJob.state == SlurmJobState.RUNNING.value, RunningJob.cluster_name == cluster_name)) \
+                .filter(and_(RunningJob.state.in_([SlurmJobState.RUNNING.value, SlurmJobState.PENDING.value]), RunningJob.cluster_name == cluster_name)) \
                 .all()
 
     @staticmethod

@@ -20,7 +20,6 @@ from utils.date_utils import dateUtils
 
 def schedule_update_job_state():
     """周期更新作业的状态"""
-    print(f"更新作业运行状态, 当前时刻为{dateUtils.now_str()}")
     clusters = DBRunningJobService.query_clusters_has_uncompleted_job()
     print(f"clusters to Handle is: {clusters}")
     handle_clusters(clusters)
@@ -45,11 +44,11 @@ def reschedule(cluster_name):
     """
     jobs_needs_reschedule = DBRunningJobService.query_jobs_needs_reschedule(cluster_name)
     print(f"重新需要调度的作业详情为: {jobs_needs_reschedule}")
-    print(f"重新需要调度的作业有：{len(jobs_needs_reschedule)}个")
     job_data_items = get_corresponding_job_items(jobs_needs_reschedule)
 
-    print(f"重新需要调度的作业条目: {job_data_items}")
+    print(f"由于作业调度，重新需要插入的作业条目: {job_data_items}")
     singleJobDataItemService.add_batch(job_data_items)
+    print(f"从正在运行的作业表中移除已经被重新调度的作业记录")
     DBRunningJobService.delete_batch(jobs_needs_reschedule)
 
 
@@ -85,19 +84,19 @@ def get_file_list(file_list_str) -> List[str]:
 
 def update_running_job_state(cluster_name):
     """
-    更新该集群中所有上一个时刻状态为RUNNING的作业状态
+    更新该集群中所有上一个时刻状态为RUNNING的作业状态, 前一时刻如果为Pending
     @param cluster_name:
     """
-    running_jobs = DBRunningJobService.query_running_jobs(cluster_name)
+    jobs = DBRunningJobService.query_running_and_pending_jobs(cluster_name)
 
-    if len(running_jobs) == 0:
+    if len(jobs) == 0:
         return
 
-    print(f"前一时刻一共有{len(running_jobs)}个作业处于运行中, 需要更新状态")
-    print(f"集群{cluster_name}上次查询处于正在运行的记录为{running_jobs}")
-    current_job_states = get_current_job_states(cluster_name, [job1.job_id for job1 in running_jobs])
+    print(f"前一时刻一共有{len(jobs)}个作业处于运行中, 需要更新状态")
+    print(f"集群{cluster_name}上次查询处于正在运行的记录为{jobs}")
+    current_job_states = get_current_job_states(cluster_name, [job1.job_id for job1 in jobs])
     print(current_job_states)
-    update_running_jobs_state_to_db(current_job_states, running_jobs)
+    update_running_jobs_state_to_db(current_job_states, jobs)
 
 
 def update_running_jobs_state_to_db(current_job_states, running_jobs):

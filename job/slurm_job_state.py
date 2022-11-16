@@ -35,15 +35,16 @@ class SlurmJobState(Enum):
 
     @staticmethod
     def states_end() -> List[str]:
-        """作业正常结束或者取消的状态认为，不需要再重新调度"""
+        """作业正常结束状态，作业不处于这些状态，表明作业异常或者作业正在运行"""
         return [SlurmJobState.CANCELLED.value,
                 SlurmJobState.CANCELLED_PLUS.value,
                 SlurmJobState.COMPLETED.value]
 
     @staticmethod
     def states_normal() -> List[str]:
-        """作业正常结束或者取消的状态认为，不需要再重新调度"""
+        """作业正常结束或者取消、正在运行的状态，不需要再重新调度"""
         return [SlurmJobState.CANCELLED.value,
                 SlurmJobState.CANCELLED_PLUS.value,
                 SlurmJobState.COMPLETED.value,
-                SlurmJobState.RUNNING.value]
+                SlurmJobState.RUNNING.value,
+                SlurmJobState.PENDING.value]
