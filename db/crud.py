@@ -47,13 +47,14 @@ def get_clusters(db: Session, skip: int = 0, limit: int = 100):
 
 def create_cluster(db: Session, cluster: schema.ClusterCreate):
     """
-    创建集群
+    插入集群记录
     :param db:数据库会话
     :param cluster:集群模型
     :return:根据集群名称、ip、端口创建的集群信息
     """
     db_cluster = models.ClusterStatus(cluster_name=cluster.cluster_name, ip=cluster.ip, port=cluster.port,
-                                      state=cluster.state, user=cluster.user, password=cluster.password)
+                                      state=cluster.state, user=cluster.user, password=cluster.password,
+                                      max_running_jobs_limit=cluster.max_running_jobs_limit)
     db.add(db_cluster)
     db.commit()
     db.refresh(db_cluster)

@@ -23,6 +23,9 @@ class ClusterStatus(Base):
     port = Column(Integer)  # 连接用户
     user = Column(String(255))  # 连接密码
     password = Column(String(255))
+    # 集群中最大运行作业限制，该信息会限制CCC投递作业，
+    # 当集群中已经运行的作业数目大于等于该值，不允许向该集群递交新的作业
+    max_running_jobs_limit = Column(Integer)
     createtime = Column(DateTime(timezone=True), default=datetime.now, comment="创建时间")
     updatetime = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now, comment="修改时间")
     partitions = relationship("PartitionStatus", back_populates="clusterstatus")

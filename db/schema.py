@@ -8,11 +8,11 @@
 @email :yangqinglin@zhejianglab.com
 '''
 
-from db.dp_cluster_status_table import PartitionStatus
+from datetime import datetime
+from typing import List
+
 from pydantic import BaseModel
 
-from typing import List
-from datetime import datetime
 
 class PartitionBase(BaseModel):
     avail: str
@@ -20,27 +20,34 @@ class PartitionBase(BaseModel):
     nodes_avail: int
     state: str
 
+
 class Partition(PartitionBase):
+    """分区映射表"""
     primary_id: int
     cluster_name: str
     partition_name: str
     createtime: datetime
     updatetime: datetime
+
     class Config:
         orm_mode = True
+
 
 class PartitionCreate(PartitionBase):
     cluster_name: str
     partition_name: str
 
+
 class ParitionUpdate(PartitionBase):
     pass
+
 
 class ClusterBase(BaseModel):
     cluster_name:str
     ip: str
     port:int
     user: str
+
 
 class Cluster(ClusterBase):
     primary_id: int
@@ -52,6 +59,8 @@ class Cluster(ClusterBase):
     class Config:
         orm_mode = True
 
+
 class ClusterCreate(ClusterBase):
     state: str
     password: str
+    max_running_jobs_limit: int
