@@ -16,15 +16,13 @@ from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.SingleJobDataItemService import singleJobDataItemService
 from slurm_monitor.serverconn import SlurmServer
 from utils.date_utils import dateUtils
-from utils.log import Log
-
-log = Log.ulog("schedule_update_job.log")
 
 
-def schedule_update_job():
+def schedule_update_job_state():
     """周期更新作业的状态"""
-    log.info(f"开始更新作业运行状态, 当前时刻为{dateUtils.now_str()}")
+    print(f"更新作业运行状态, 当前时刻为{dateUtils.now_str()}")
     clusters = DBRunningJobService.query_clusters_has_uncompleted_job()
+    print(f"clusters to Handle is: {clusters}")
     handle_clusters(clusters)
 
 
@@ -46,8 +44,12 @@ def reschedule(cluster_name):
     @param cluster_name: 集群名称
     """
     jobs_needs_reschedule = DBRunningJobService.query_jobs_needs_reschedule(cluster_name)
-    print(f"重新需要调度的作业有：{len(jobs_needs_reschedule)}")
-    singleJobDataItemService.add_batch(get_corresponding_job_items(jobs_needs_reschedule))
+    print(f"重新需要调度的作业详情为: {jobs_needs_reschedule}")
+    print(f"重新需要调度的作业有：{len(jobs_needs_reschedule)}个")
+    job_data_items = get_corresponding_job_items(jobs_needs_reschedule)
+
+    print(f"重新需要调度的作业条目: {job_data_items}")
+    singleJobDataItemService.add_batch(job_data_items)
     DBRunningJobService.delete_batch(jobs_needs_reschedule)
 
 
@@ -87,10 +89,12 @@ def update_running_job_state(cluster_name):
     @param cluster_name:
     """
     running_jobs = DBRunningJobService.query_running_jobs(cluster_name)
+
     if len(running_jobs) == 0:
         return
 
-    print(f"一共有{len(running_jobs)}个作业处于运行中")
+    print(f"前一时刻一共有{len(running_jobs)}个作业处于运行中, 需要更新状态")
+    print(f"集群{cluster_name}上次查询处于正在运行的记录为{running_jobs}")
     current_job_states = get_current_job_states(cluster_name, [job1.job_id for job1 in running_jobs])
     print(current_job_states)
     update_running_jobs_state_to_db(current_job_states, running_jobs)
