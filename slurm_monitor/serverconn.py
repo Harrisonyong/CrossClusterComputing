@@ -72,6 +72,9 @@ class SlurmServer(Connector):
         print(f"ids_str={ids_str}")
         return self.exec("sacct -j " + ids_str)
 
+    def squeue(self):
+        return self.exec("squeue")
+
     def close(self):
         self.sshClient.close()
 
