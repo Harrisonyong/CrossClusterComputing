@@ -8,7 +8,9 @@
 import sys
 from pathlib import Path
 
+from db.db_cluster import dBClusterService
 from job.job_delivery import JobDelivery
+from utils.log import Log
 
 sys.path.append(str(Path(__file__).parent.parent))
 import time
@@ -22,6 +24,8 @@ from job.SingleJobDataItemService import singleJobDataItemService
 from job.db_job_submit import dBJobSubmitService
 from slurm_monitor.monitor import slurm_search
 from utils.date_utils import DateUtils
+
+log = Log.ulog("schedule_handle_job_data_item.log")
 
 
 def handle_job_data_item():
@@ -91,19 +95,26 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     if len(job_data_items) < max_schedule_num:
         print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={DateUtils.now_str()}")
 
-    job_delivery = JobDelivery(record, partition, job_data_items)
+    cluster = dBClusterService.get_cluster_by_name(partition.cluster_name)
+    job_delivery = JobDelivery(cluster, partition, record, job_data_items)
+
+    if not job_delivery.can_submit():
+        log.info(f"{cluster.cluster_name}集群中已经提交的作业数为{cluster.submit_jobs_num}>={cluster.max_submit_jobs_limit}")
+        return
+
+    print(f"{cluster.cluster_name}集群中已经提交的作业数为{cluster.submit_jobs_num}")
     job_delivery.delivery()
     # 写入运行作业信息
     dbRunningJobService.add(get_running_job(job_delivery))
     # 数据不同步问题
     # 移除作业条目
-    single_item_primary_ids = [item.primary_id for item in job_data_items]
+    single_item_primary_ids = [item.primary_id for item in job_delivery.job_data_items]
     singleJobDataItemService.deleteBatch(single_item_primary_ids)
     print(f"删除了{len(job_data_items)}个作业条目")
     # 触发分区状态修改
     trigger_partition_change(partition)
     print(
-        f"本次调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(job_data_items)}个作业条目, 作业数据条目为: {[item.data_file for item in job_data_items]}")
+        f"调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(job_data_items)}个作业条目, 作业数据条目为: {[item.data_file for item in job_data_items]}")
 
 
 def get_running_job(job_delivery: JobDelivery):

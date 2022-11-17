@@ -11,7 +11,7 @@ import os
 from typing import List
 
 from db.db_cluster import dBClusterService
-from db.dp_cluster_status_table import PartitionStatus
+from db.dp_cluster_status_table import PartitionStatus, ClusterStatus
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.slurm_job_state import SlurmJobState
@@ -23,14 +23,17 @@ from utils.slurm_script_generator import SlurmScriptGenerator
 
 
 class JobDelivery:
-    """代表一次作业投递，其包括了作业投递、分区信息、具体投递的作业条目"""
+    """代表一次作业投递，其包括了集群信息、分区信息、作业投递、具体投递的作业条目"""
 
-    def __init__(self, submit: JobDataSubmit, partition: PartitionStatus, job_data_items: List[SingleJobDataItem]):
-        self.job_data_submit = submit
+    def __init__(self, cluster: ClusterStatus, partition: PartitionStatus, submit: JobDataSubmit,
+                 job_data_items: List[SingleJobDataItem]):
+        self.cluster = cluster
         self.partition = partition
+        self.job_data_submit = submit
         self.job_data_items = job_data_items
         self.job_id = None
         self.job_state = SlurmJobState.RUNNING.value
+
         self.job_name = self.get_slurm_job_name()
 
         print("in JobDelivery.__init__ before execute")
@@ -42,6 +45,9 @@ class JobDelivery:
         job_descriptor = self.get_job_descriptor()
         script_generator = SlurmScriptGenerator(self.slurm_script_path)
         script_generator.generate_script_file(resource_descriptor, job_descriptor)
+
+    def can_submit(self) -> bool:
+        return self.cluster.can_submit_new_job()
 
     def delivery(self):
         """投递的主要过程包括

@@ -34,6 +34,13 @@ class ClusterStatus(Base):
     def __repr__(self) -> str:
         return "<ClusterStatus(clustername=%s, ip=%s, state=%s)>" % (self.cluster_name, self.ip, self.state)
 
+    def can_submit_new_job(self):
+        """
+        判断是否可以向集群提交新的作业，当且仅当作业的提交数小于限制时才可以提交
+        @return:
+        """
+        return self.submit_jobs_num < self.max_submit_jobs_limit
+
 
 class PartitionStatus(Base):
     __tablename__ = "dp_partition_table"
