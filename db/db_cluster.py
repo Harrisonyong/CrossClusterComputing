@@ -9,6 +9,7 @@
 import sys
 from pathlib import Path
 from typing import List
+
 sys.path.append(str(Path(__file__).parent.parent))
 from db.dp_cluster_status_table import ClusterStatus
 from db.db_service import Session
@@ -36,7 +37,8 @@ class DBClusterService:
         with Session() as session:
             return session.query(ClusterStatus).filter(ClusterStatus.cluster_name == cluster_name).first()
 
-    def get_clusters(self, skip: int = 0, limit: int = 100)-> List[ClusterStatus]:
+    @staticmethod
+    def get_clusters(skip: int = 0, limit: int = 100) -> List[ClusterStatus]:
         """
         获取特定数量的集群信息
         :param db: 数据库会话
@@ -46,6 +48,19 @@ class DBClusterService:
         """
         with Session() as session:
             return session.query(ClusterStatus).offset(skip).limit(limit).all()
+
+    @staticmethod
+    def save_cluster(cluster: ClusterStatus):
+        """新增或者更新一组集群信息"""
+        with Session() as session:
+            session.add(cluster)
+            session.commit()
+
+    @staticmethod
+    def save_clusters(clusters: List[ClusterStatus]):
+        with Session() as session:
+            session.add_all(clusters)
+            session.commit()
 
 
 dBClusterService = DBClusterService()
