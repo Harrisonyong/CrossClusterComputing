@@ -4,8 +4,7 @@
 # email: wannachan@outlook.com
 # date: 2022/10/19 周三 16:07:44
 # description: 作业数据投递表的概览数据
-
-
+import math
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime
 from db.db_service import Base
@@ -45,10 +44,18 @@ class JobDataSubmit(Base):
     def __repr__(self):
         return "<JobDataSubmit(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
 
-    def nodes_needed(self) -> float:
+    def one_item_nodes_needed(self) -> float:
         """
-        返回该作业投递需要的节点数量,该值为大于0的浮点数
+        返回该作业投递需要的节点数量,该值为大于0的浮点数，即此类作业条目一个条目的需要的节点数
         倘若一个节点可以同时处理4个作业条目，则此作业条目的node值取值为1/4
         """
         resource = eval(self.single_item_allocation)
         return resource["node"]
+
+    def nodes_need_to_handle(self, item_count: int):
+        """
+        处理item个单条作业数据需要的节点数
+        @param item_count:
+        @return:
+        """
+        return math.ceil(item_count * self.one_item_nodes_needed())

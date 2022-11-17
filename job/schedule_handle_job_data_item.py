@@ -4,7 +4,7 @@
 # email: wannachan@outlook.com
 # date: 2022/10/19 周三 11:31:57
 # description: 该文件负责周期性的处理作业条目数据，组织成slurm脚本，并通过paramico提交作业
-
+import math
 import sys
 from pathlib import Path
 
@@ -87,16 +87,11 @@ def find_available_partition(record: JobDataSubmit, partitions: List[PartitionSt
 
 def handle(record: JobDataSubmit, partition: PartitionStatus):
     """使用分区partition来处理record类型的作业条目"""
-
-    print(f"in handle, partition: {partition}")
-    max_schedule_num = partition.number_can_schedule(record)
-    job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
-        record.job_total_id, max_schedule_num)
-    if len(job_data_items) < max_schedule_num:
-        print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={DateUtils.now_str()}")
-
     cluster = dBClusterService.get_cluster_by_name(partition.cluster_name)
-    job_delivery = JobDelivery(cluster, partition, record, job_data_items)
+    print(f"in handle, cluster: {cluster}, partition: {partition}")
+
+    job_data_items, needed_nodes = get_node_count_and_items(partition, record)
+    job_delivery = JobDelivery(cluster, partition, needed_nodes, record, job_data_items)
 
     if not job_delivery.can_submit():
         log.info(f"{cluster.cluster_name}集群中已经提交的作业数为{cluster.submit_jobs_num}>={cluster.max_submit_jobs_limit}")
@@ -104,17 +99,65 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
 
     print(f"{cluster.cluster_name}集群中已经提交的作业数为{cluster.submit_jobs_num}")
     job_delivery.delivery()
+    update_running_job_and_item(job_delivery)
+    # 触发分区状态修改
+    trigger_partition_change(partition)
+    print(
+        f"调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(job_data_items)}个作业条目, 作业数据条目为: {[item.data_file for item in job_data_items]}")
+
+
+def get_node_count_and_items(partition, record):
+    """
+    根据分区资源信息和记录的资源要求获得处理的节点数和作业条目数
+    @rtype: object
+    """
+    if record.one_item_nodes_needed() >= 1:
+        # 表明需要多个节点同时处理一个文件，此刻单独为每个作业条目提交作业
+        job_data_items, needed_nodes = get_node_count_and_items_sequentially(record)
+    else:
+        job_data_items, needed_nodes = get_node_count_and_items_parallel(partition, record)
+    return job_data_items, needed_nodes
+
+
+def update_running_job_and_item(job_delivery):
+    """
+    由于作业投递成功之后，需要插入正在运行的作业，并且删除正在计算的作业
+    @param job_delivery:
+    """
     # 写入运行作业信息
     dbRunningJobService.add(get_running_job(job_delivery))
     # 数据不同步问题
     # 移除作业条目
     single_item_primary_ids = [item.primary_id for item in job_delivery.job_data_items]
     singleJobDataItemService.deleteBatch(single_item_primary_ids)
-    print(f"删除了{len(job_data_items)}个作业条目")
-    # 触发分区状态修改
-    trigger_partition_change(partition)
-    print(
-        f"调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(job_data_items)}个作业条目, 作业数据条目为: {[item.data_file for item in job_data_items]}")
+    print(f"删除了{len(job_delivery.job_data_items)}个作业条目")
+
+
+def get_node_count_and_items_parallel(partition, record):
+    """
+    当作业条目需要的节点小于1时，表名，1个节点允许同时处理多个作业
+    @param partition: 待提交的作业分区
+    @param record: 记录
+    @return: 待处理的条目数和所需要的节点数
+    """
+    max_schedule_num = partition.number_can_schedule(record)
+    job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
+        record.job_total_id, max_schedule_num)
+    if len(job_data_items) < max_schedule_num:
+        print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={DateUtils.now_str()}")
+    needed_nodes = partition.nodes_avail
+    if len(job_data_items) < partition.nodes_avail:
+        # 保证至少每个节点都有一个作业
+        needed_nodes = record.nodes_need_to_handle(len(job_data_items))
+    return job_data_items, needed_nodes
+
+
+def get_node_count_and_items_sequentially(record):
+    max_schedule_num = 1
+    job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
+        record.job_total_id, max_schedule_num)
+    needed_nodes = record.nodes_need_to_handle(len(job_data_items))
+    return job_data_items, needed_nodes
 
 
 def get_running_job(job_delivery: JobDelivery):

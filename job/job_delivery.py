@@ -23,9 +23,9 @@ from utils.slurm_script_generator import SlurmScriptGenerator
 
 
 class JobDelivery:
-    """代表一次作业投递，其包括了集群信息、分区信息、作业投递、具体投递的作业条目"""
+    """代表一次作业投递，其包括了集群信息、分区信息、需要处理这些条目的节点信息、作业投递、具体投递的作业条目"""
 
-    def __init__(self, cluster: ClusterStatus, partition: PartitionStatus, submit: JobDataSubmit,
+    def __init__(self, cluster: ClusterStatus, partition: PartitionStatus, node_count: int, submit: JobDataSubmit,
                  job_data_items: List[SingleJobDataItem]):
         self.cluster = cluster
         self.partition = partition
@@ -33,12 +33,9 @@ class JobDelivery:
         self.job_data_items = job_data_items
         self.job_id = None
         self.job_state = SlurmJobState.RUNNING.value
-
+        self.node_count = node_count
         self.job_name = self.get_slurm_job_name()
-
-        print("in JobDelivery.__init__ before execute")
         self.slurm_script_path = self.get_slurm_batch_file_name()
-        print(f"in JobDelivery.__init__ before execute {self.slurm_script_path}")
 
     def generate_slurm_script(self):
         resource_descriptor = self.get_resource_descriptor()
@@ -84,7 +81,7 @@ class JobDelivery:
         print(f"record: {self.job_data_submit}, partition: {self.partition}")
 
         job_name = self.get_slurm_job_name()
-        node_count = self.partition.nodes_avail
+        node_count = self.node_count
         partition_name = self.partition.partition_name
         return SlurmResourceDescriptor.resource_descriptor(job_name, node_count, partition_name, 64)
 

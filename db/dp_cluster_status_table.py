@@ -62,7 +62,7 @@ class PartitionStatus(Base):
 
     def can_schedule(self, record: JobDataSubmit) -> bool:
         """判断该分区是否可以调度作业投递记录"""
-        return self.nodes_avail / (1.0 * record.nodes_needed()) >= 1
+        return self.nodes_avail / (1.0 * record.one_item_nodes_needed()) >= 1
 
     def number_can_schedule(self, record: JobDataSubmit) -> int:
         """
@@ -72,4 +72,4 @@ class PartitionStatus(Base):
         若分区的节点数为4，则可以调度的作业条目数为2
         """
 
-        return int(self.nodes_avail / (1.0 * record.nodes_needed()))
+        return int(self.nodes_avail / (1.0 * record.one_item_nodes_needed()))
