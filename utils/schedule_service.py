@@ -9,6 +9,7 @@
 """
 from job.schedule_handle_job_data_item import handle_job_data_item
 from job.schedule_update_job import schedule_update_job_state
+from job.schedule_update_submit_job import schedule_update_submit_job
 from slurm_monitor.monitor import add_slurm_clusters, slurm_search
 from utils.scheduler import Scheduler
 
@@ -22,6 +23,7 @@ def add_schedule_service():
     add_slurm_monitor_job(5)
     add_schedule_update_job(5)
     add_job_data_item_scan_job(5)
+    add_slurm_submit_job_number_update_job(5)
 
 
 def add_schedule_update_job(interval: int):
@@ -48,3 +50,12 @@ def add_slurm_monitor_job(interval: int):
         scheduler.add_job(slurm_search, args=[
             cluster.cluster_name, cluster.ip, cluster.port, cluster.user, cluster.password], id=f"{cluster.cluster_name}", trigger="interval", seconds=interval, replace_existing=True)
         print(f"定时监控任务{cluster.cluster_name}启动")
+
+
+def add_slurm_submit_job_number_update_job(interval: int):
+    """
+    添加定期更新所有集群的作业提交数,该实现会把所有的集群在一次调度时进行更新
+    @return:
+    """
+    scheduler.add_job(schedule_update_submit_job, args=[], id=f"schedule_update_job_submit_number_thread",
+                      trigger="interval", seconds=interval, replace_existing=True)

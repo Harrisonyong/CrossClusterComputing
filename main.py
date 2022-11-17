@@ -13,13 +13,13 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+
 from db import db_service as database
 from db import dbcontroller
 from job import job_controller
 from slurm_monitor import monitor
 from utils.schedule_service import add_schedule_service
 from utils.scheduler import Scheduler
-
 
 file = Path(__file__)
 sys.path.append(str(file.parent.parent))
@@ -66,4 +66,4 @@ async def stop():
 
 if __name__ == '__main__':
     uvicorn.run(app='main:app', host="0.0.0.0",
-                port=8001, reload=True, debug=True)
+                port=8088, reload=True, debug=True)

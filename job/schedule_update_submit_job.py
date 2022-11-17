@@ -7,8 +7,6 @@
 @time: 2022/11/17 10:16
 @desc: 该文件用于周期性的更新作业提交数
 """
-import sched
-import time
 from typing import List
 
 from db.db_cluster import DBClusterService
@@ -20,16 +18,8 @@ from utils.slurm_result import SlurmResult
 
 log = Log.ulog("monitor.log")
 
-s = sched.scheduler(time.time, time.sleep)
-
-
-def loop_monitor():
-    s.enter(5, 1, schedule_update_submit_job, ())
-    s.run()
-
 
 def schedule_update_submit_job():
-    s.enter(5, 1, schedule_update_submit_job, ())
     print('do schedule_update_submit_job time: ', DateUtils.now_str())
     clusters = DBClusterService.get_clusters(0, 1000)
     print(f"当前系统中共有slurm集群{len(clusters)}个")
