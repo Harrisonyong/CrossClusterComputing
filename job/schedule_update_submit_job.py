@@ -16,7 +16,7 @@ from utils.date_utils import DateUtils
 from utils.log import Log
 from utils.slurm_result import SlurmResult
 
-log = Log.ulog("monitor.log")
+log = Log.ulog("schedule_update_submit_job.log")
 
 
 def schedule_update_submit_job():
@@ -48,5 +48,3 @@ def update_cluster_submit_job_number(cluster: ClusterStatus):
         log.info(f"当前时刻{cluster.cluster_name}集群中已经提交了{submit_number}个作业")
         cluster.submit_jobs_num = submit_number
         DBClusterService.save_cluster(cluster)
-
-    print(f"update_cluster_submit_job_number end")
