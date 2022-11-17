@@ -21,7 +21,7 @@ from db.dp_running_job_table import RunningJob
 from job.SingleJobDataItemService import singleJobDataItemService
 from job.db_job_submit import dBJobSubmitService
 from slurm_monitor.monitor import slurm_search
-from utils.date_utils import dateUtils
+from utils.date_utils import DateUtils
 
 
 def handle_job_data_item():
@@ -89,7 +89,7 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
         record.job_total_id, max_schedule_num)
     if len(job_data_items) < max_schedule_num:
-        print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={dateUtils.now_str()}")
+        print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={DateUtils.now_str()}")
 
     job_delivery = JobDelivery(record, partition, job_data_items)
     job_delivery.delivery()

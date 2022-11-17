@@ -11,15 +11,17 @@ from datetime import datetime
 class DateUtils:
     """日期时间的辅助类"""
 
-    def now_str(self):
+    @staticmethod
+    def now_str():
         now = datetime.now()
         return now.strftime('%Y-%m-%d %H:%M:%S')
 
-    def job_now_str(self):
+    @staticmethod
+    def job_now_str():
         now = datetime.now()
         return now.strftime('%Y-%m-%d-%H-%M-%S-%f')
 
 
 dateUtils = DateUtils()
 if __name__ == '__main__':
-    print(dateUtils.now_str())
+    print(DateUtils.now_str())
