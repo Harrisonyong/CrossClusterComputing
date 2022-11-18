@@ -100,7 +100,6 @@ def handle(record: JobDataSubmit, partition: PartitionStatus):
     print(f"{cluster.cluster_name}集群中已经提交的作业数为{cluster.submit_jobs_num}")
     job_delivery.delivery()
     update_running_job_and_item(job_delivery)
-    # 触发分区状态修改
     trigger_partition_change(partition)
     print(
         f"调度完成：集群名称={partition.cluster_name}, 分区名={partition.partition_name},调度了{record.job_total_id}的{len(job_data_items)}个作业条目, 作业数据条目为: {[item.data_file for item in job_data_items]}")
@@ -111,23 +110,18 @@ def get_node_count_and_items(partition, record):
     根据分区资源信息和记录的资源要求获得处理的节点数和作业条目数
     @rtype: object
     """
-    if record.one_item_nodes_needed() >= 1:
-        # 表明需要多个节点同时处理一个文件，此刻单独为每个作业条目提交作业
-        job_data_items, needed_nodes = get_node_count_and_items_sequentially(record)
-    else:
-        job_data_items, needed_nodes = get_node_count_and_items_parallel(partition, record)
-    return job_data_items, needed_nodes
+    if record.needs_handle_sequential():
+        return get_node_count_and_items_sequentially(record)
+    return get_node_count_and_items_parallel(partition, record)
 
 
 def update_running_job_and_item(job_delivery):
     """
-    由于作业投递成功之后，需要插入正在运行的作业，并且删除正在计算的作业
-    @param job_delivery:
+    由于作业投递成功之后，需要插入正在运行的作业，并且删除正在计算的作业，
+    此部分函数需要位于事务中
+    @param job_delivery: 已经提交成功的作业投递
     """
-    # 写入运行作业信息
     dbRunningJobService.add(get_running_job(job_delivery))
-    # 数据不同步问题
-    # 移除作业条目
     single_item_primary_ids = [item.primary_id for item in job_delivery.job_data_items]
     singleJobDataItemService.deleteBatch(single_item_primary_ids)
     print(f"删除了{len(job_delivery.job_data_items)}个作业条目")

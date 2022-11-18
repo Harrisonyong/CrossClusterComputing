@@ -42,7 +42,8 @@ class JobDataSubmit(Base):
     transfer_end_time = Column(DateTime)
 
     def __repr__(self):
-        return "<JobDataSubmit(job_total_id=%s, job_name=%s, create_time=%s))>" % (self.job_total_id, self.job_name, self.create_time)
+        return "<JobDataSubmit(job_total_id=%s, job_name=%s, create_time=%s))>" % (
+        self.job_total_id, self.job_name, self.create_time)
 
     def one_item_nodes_needed(self) -> float:
         """
@@ -59,3 +60,11 @@ class JobDataSubmit(Base):
         @return:
         """
         return math.ceil(item_count * self.one_item_nodes_needed())
+
+    def needs_handle_sequential(self):
+        """
+        表明需要多个节点同时处理一个文件，此刻单独为每个作业条目提交作业
+        @return:
+        """
+        return self.one_item_nodes_needed() >= 1
+
