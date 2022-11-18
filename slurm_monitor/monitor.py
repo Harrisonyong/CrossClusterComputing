@@ -18,7 +18,7 @@ from utils.scheduler import Scheduler
 from utils.config import Configuration as config
 from utils.response import Response
 from fastapi import APIRouter, Depends, HTTPException
-from utils.slurm_server import SlurmServer
+from slurm.slurm_server import SlurmServer
 from sqlalchemy.orm import Session
 from db import db_service as database
 from db import crud, schema

@@ -9,7 +9,7 @@
 """
 from typing import List
 
-from utils.slurm_job import SlurmJob
+from slurm.slurm_job import SlurmJob
 
 
 class SlurmResult:

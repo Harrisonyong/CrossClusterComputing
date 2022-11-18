@@ -11,10 +11,10 @@ from typing import List
 
 from db.db_cluster import DBClusterService
 from db.dp_cluster_status_table import ClusterStatus
-from utils.slurm_server import SlurmServer
+from slurm.slurm_server import SlurmServer
 from utils.date_utils import DateUtils
 from utils.log import Log
-from utils.slurm_result import SlurmResult
+from slurm.slurm_result import SlurmResult
 
 log = Log.ulog("schedule_update_submit_job.log")
 
