@@ -27,7 +27,7 @@ router = APIRouter(
 
 @router.get("/job-submit/welcome")
 async def welcome():
-   return Response.success(msg="welcome to job-submit page")
+    return Response.success(msg="welcome to job-submit page")
 
 
 @router.post("/job-submit/create")

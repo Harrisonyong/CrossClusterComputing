@@ -5,24 +5,19 @@
 # date: 2022/10/20 周四 10:25:48
 # description: 用于与数据库中作业数据投递表进行交互
 
-
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from typing import List
 from datetime import datetime
-from turtle import update
 from db.db_service import dbService
 from db.dp_job_data_submit_table import JobDataSubmit
-from db.dp_single_job_data_item_table import SingleJobDataItem
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 from job.submit_state import SubmitState
-
 
 
 engine = create_engine(dbService.db_config()["file"], connect_args={
@@ -32,7 +27,7 @@ Base = declarative_base()
 
 
 class DBJobSubmitService:
-    '用于负责与数据库交互作业投递记录增删改查'
+    """用于负责与数据库交互作业投递记录增删改查"""
 
     def get_submit_record(self, job_total_id: int) -> JobDataSubmit:
         """根据job_total_id获取作业投递记录"""

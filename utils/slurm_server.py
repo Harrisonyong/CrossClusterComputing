@@ -1,28 +1,16 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+# -*- coding:UTF-8 -*-
+
 """
-@Filename :monitor.py
-@Description :
-@Datetime :2022/09/28 14:25:05
-@Author :yangqinglin
-@email :yangqinglin@zhejianglab.com
+@author: songquanheng
+@file: slurm_server.py
+@time: 2022/11/18 10:44
+@desc: 
 """
 from typing import List
 
-import paramiko
-from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
-
-
-class Connector:
-    def __init__(self, host=None, port=None,
-                 user=None, password=None):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.sshClient = paramiko.SSHClient()
-        self.sshClient.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-        self.sshClient.connect(host, port, user, password)
+from db.dp_cluster_status_table import PartitionStatus, ClusterStatus
+from slurm_monitor.connector import Connector
 
 
 class SlurmServer(Connector):

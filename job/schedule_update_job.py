@@ -13,9 +13,8 @@ from db.db_cluster import dBClusterService
 from db.db_running_job import DBRunningJobService
 from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
-from job.SingleJobDataItemService import singleJobDataItemService
-from slurm_monitor.serverconn import SlurmServer
-from utils.date_utils import dateUtils
+from job.single_job_data_item_service import singleJobDataItemService
+from utils.slurm_server import SlurmServer
 
 
 def schedule_update_job_state():

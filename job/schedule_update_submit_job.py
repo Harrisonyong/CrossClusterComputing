@@ -11,7 +11,7 @@ from typing import List
 
 from db.db_cluster import DBClusterService
 from db.dp_cluster_status_table import ClusterStatus
-from slurm_monitor.serverconn import SlurmServer
+from utils.slurm_server import SlurmServer
 from utils.date_utils import DateUtils
 from utils.log import Log
 from utils.slurm_result import SlurmResult

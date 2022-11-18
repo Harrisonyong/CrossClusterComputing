@@ -15,7 +15,7 @@ from db.dp_cluster_status_table import PartitionStatus, ClusterStatus
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_single_job_data_item_table import SingleJobDataItem
 from job.slurm_job_state import SlurmJobState
-from slurm_monitor.serverconn import SlurmServer
+from utils.slurm_server import SlurmServer
 from utils import Configuration
 from utils.date_utils import dateUtils
 from utils.slurm_resource_descriptor import SlurmResourceDescriptor
