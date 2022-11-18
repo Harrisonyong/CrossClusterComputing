@@ -15,7 +15,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from db import db_service as database
-from db import dbcontroller
+from db import db_controller
 from job import job_controller
 from slurm_monitor import monitor
 from utils.schedule_service import add_schedule_service
@@ -37,7 +37,7 @@ scheduler = Scheduler.AsyncScheduler()
 database.Base.metadata.create_all(bind=database.engine)
 
 app.include_router(monitor.router)
-app.include_router(dbcontroller.router)
+app.include_router(db_controller.router)
 app.include_router(job_controller.router)
 
 
