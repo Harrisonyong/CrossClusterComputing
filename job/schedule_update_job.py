@@ -13,7 +13,7 @@ from db.db_cluster import dBClusterService
 from db.db_running_job import DBRunningJobService
 from db.dp_running_job_table import RunningJob
 from db.dp_single_job_data_item_table import SingleJobDataItem
-from job.single_job_data_item_service import singleJobDataItemService
+from job.single_job_data_item_service import singleJobDataItemService, SingleJobDataItemService
 from slurm.slurm_server import SlurmServer
 
 
@@ -46,7 +46,7 @@ def reschedule(cluster_name):
     job_data_items = get_corresponding_job_items(jobs_needs_reschedule)
 
     print(f"由于作业调度，重新需要插入的作业条目: {job_data_items}")
-    singleJobDataItemService.add_batch(job_data_items)
+    SingleJobDataItemService.add_batch(job_data_items)
     print(f"从正在运行的作业表中移除已经被重新调度的作业记录")
     DBRunningJobService.delete_batch(jobs_needs_reschedule)
 

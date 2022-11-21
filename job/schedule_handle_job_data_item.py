@@ -4,7 +4,6 @@
 # email: wannachan@outlook.com
 # date: 2022/10/19 周三 11:31:57
 # description: 该文件负责周期性的处理作业条目数据，组织成slurm脚本，并通过paramico提交作业
-import math
 import sys
 from pathlib import Path
 
@@ -20,7 +19,7 @@ from db.db_running_job import dbRunningJobService
 from db.dp_cluster_status_table import ClusterStatus, PartitionStatus
 from db.dp_job_data_submit_table import JobDataSubmit
 from db.dp_running_job_table import RunningJob
-from job.single_job_data_item_service import singleJobDataItemService
+from job.single_job_data_item_service import SingleJobDataItemService
 from job.db_job_submit import dBJobSubmitService
 from slurm_monitor.monitor import slurm_search
 from utils.date_utils import DateUtils
@@ -30,7 +29,7 @@ log = Log.ulog("schedule_handle_job_data_item.log")
 
 def handle_job_data_item():
     """执行定期扫描程序，处理所有的作业数据条目"""
-    groups = singleJobDataItemService.groupByJobTotalId()
+    groups = SingleJobDataItemService.group_by_job_total_id()
     job_total_ids = [group[0] for group in groups]
     print("时刻{tm}共有{size}类,内容{con}的作业数据条目待处理".format(size=len(groups), con=[group[0] for group in groups],
                                                      tm=time.strftime('%Y:%m:%d %H:%M:%S',
@@ -68,7 +67,7 @@ def schedule_submit_record(record: JobDataSubmit, partitions: List[PartitionStat
     # 由于一次循环可能无法将record类的所有单条数据全部调度完，因此使用while循环
     while can_schedule(record, partitions):
         print(f"处理作业:{record.job_name}, job_total_id: {record.job_total_id:d}")
-        print(f"该作业仍有{singleJobDataItemService.countOfItems(record.job_total_id)}个作业条目未处理")
+        print(f"该作业仍有{SingleJobDataItemService.count_of_items(record.job_total_id)}个作业条目未处理")
         avail_index = find_available_partition(record, partitions)
         print(f"可用的索引为{avail_index}, 可用分区为: {partitions[avail_index]}")
         handle(record, partitions[avail_index])
@@ -123,7 +122,7 @@ def update_running_job_and_item(job_delivery):
     """
     dbRunningJobService.add(get_running_job(job_delivery))
     single_item_primary_ids = [item.primary_id for item in job_delivery.job_data_items]
-    singleJobDataItemService.deleteBatch(single_item_primary_ids)
+    SingleJobDataItemService.delete_batch(single_item_primary_ids)
     print(f"删除了{len(job_delivery.job_data_items)}个作业条目")
 
 
@@ -135,7 +134,7 @@ def get_node_count_and_items_parallel(partition, record):
     @return: 待处理的条目数和所需要的节点数
     """
     max_schedule_num = partition.number_can_schedule(record)
-    job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
+    job_data_items = SingleJobDataItemService.query_according_id_and_limit(
         record.job_total_id, max_schedule_num)
     if len(job_data_items) < max_schedule_num:
         print(f"job_total_id={record.job_total_id}作业已经处理完成, 当前时刻={DateUtils.now_str()}")
@@ -148,7 +147,7 @@ def get_node_count_and_items_parallel(partition, record):
 
 def get_node_count_and_items_sequentially(record):
     max_schedule_num = 1
-    job_data_items = singleJobDataItemService.queryAccordingIdAndLimit(
+    job_data_items = SingleJobDataItemService.query_according_id_and_limit(
         record.job_total_id, max_schedule_num)
     needed_nodes = record.nodes_need_to_handle(len(job_data_items))
     return job_data_items, needed_nodes
