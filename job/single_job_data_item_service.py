@@ -14,10 +14,7 @@ from db.db_service import dbService
 from db.dp_single_job_data_item_table import SingleJobDataItem
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
-from utils.config import Configuration
 from sqlalchemy.ext.declarative import declarative_base
-
-
 
 engine = create_engine(dbService.db_config()["file"], connect_args={
                        "check_same_thread": False})
@@ -27,18 +24,18 @@ Base = declarative_base()
 
 class SingleJobDataItemService:
     def add(self, job_total_id, data_file):
-        '新增一条作业数据条目服务到数据表中'
-        dataItem = SingleJobDataItem()
-        dataItem.job_total_id = job_total_id
-        dataItem.data_file = data_file
-        dbService.add_item(dataItem)
+        """新增一条作业数据条目服务到数据表中"""
+        data_item = SingleJobDataItem()
+        data_item.job_total_id = job_total_id
+        data_item.data_file = data_file
+        dbService.add_item(data_item)
 
     def add_batch(self, singleJobDataItems: List[SingleJobDataItem]):
-        '添加一组作业数据条目到数据库中'
+        """添加一组作业数据条目到数据库中"""
         dbService.add_batch_item(singleJobDataItems)
 
     def query_all(self):
-        '查询作业数据表中的全部记录'
+        """查询作业数据表中的全部记录"""
         return dbService.query_all(SingleJobDataItem)
 
     def groupByJobTotalId(self):
@@ -48,7 +45,7 @@ class SingleJobDataItemService:
                 SingleJobDataItem.primary_id)).group_by(SingleJobDataItem.job_total_id).all()
 
     def allJobTotalId(self) -> List[int]:
-        '''使用列表推导式计算出所有的整体作业号'''
+        """使用列表推导式计算出所有的整体作业号"""
         with Session() as session:
             result = session.query(SingleJobDataItem.job_total_id).distinct(
                 SingleJobDataItem.job_total_id).all()
@@ -77,16 +74,16 @@ class SingleJobDataItemService:
 singleJobDataItemService = SingleJobDataItemService()
 
 
-def testAddBatch():
-    dataItems = []
+def test_add_batch():
+    data_items = []
     for i in range(10):
         item = SingleJobDataItem(
             job_total_id=1,
             data_file="/root/msa/"+str(i)+".ciff",
         )
-        dataItems.append(item)
+        data_items.append(item)
 
-    singleJobDataItemService.add_batch(dataItems)
+    singleJobDataItemService.add_batch(data_items)
 
 
 def testGroup():
@@ -97,17 +94,18 @@ def testGroup():
         print(group[0], group[1])
 
 
-def testDistinct():
-    jobTotalIds = singleJobDataItemService.allJobTotalId()
-    print(jobTotalIds)
-    print(type(jobTotalIds))
-    print(type(jobTotalIds[0]))
-    print(jobTotalIds)
+def test_distinct():
+    job_total_ids = singleJobDataItemService.allJobTotalId()
+    print(job_total_ids)
+    print(type(job_total_ids))
+    print(type(job_total_ids[0]))
+    print(job_total_ids)
 
-def testDelete():
+
+def test_delete():
 
     singleJobDataItemService.deleteBatch([64, 65, 66, 67, 68])
 
 
 if __name__ == '__main__':
-    testDelete()
+    test_delete()
